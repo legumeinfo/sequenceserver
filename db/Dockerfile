@@ -7,6 +7,9 @@ ENV DATA_STORE=https://v1.legumefederation.org/data/public
 RUN printf '#!/bin/bash\nset -o pipefail -o errexit -o nounset; curl ${DATA_STORE}/${1} | gzip -dc | makeblastdb -parse_seqids -hash_index -dbtype ${2} -taxid ${3} -title "${4}" -out $(basename ${1#.f*.gz})\n' > /usr/local/bin/mkblastdb \
   && chmod +x /usr/local/bin/mkblastdb
 
+RUN mkblastdb Aeschynomene_evenia/CIAT22838.gnm1.ann0.ZM3R/aesev.CIAT22838.gnm1.ann0.ZM3R.cds.fna.gz nucl 561484 'Aeschynomene evenia - CDS'
+RUN mkblastdb Aeschynomene_evenia/CIAT22838.gnm1.ann0.ZM3R/aesev.CIAT22838.gnm1.ann0.ZM3R.protein.faa.gz prot 561484 'Aeschynomene evenia - protein'
+RUN mkblastdb Aeschynomene_evenia/CIAT22838.gnm1.XF73/aesev.CIAT22838.gnm1.XF73.genome_main.fna.gz nucl 561484 'Aeschynomene evenia - genome'
 RUN mkblastdb Arachis_duranensis/V14167.gnm1.ann1.cxSM/aradu.V14167.gnm1.ann1.cxSM.cds.fna.gz nucl 130453 'Arachis duranensis - CDS'
 RUN mkblastdb Arachis_duranensis/V14167.gnm1.ann1.cxSM/aradu.V14167.gnm1.ann1.cxSM.protein.faa.gz prot 130453 'Arachis duranensis - protein'
 RUN mkblastdb Arachis_duranensis/V14167.gnm1.SWBf/aradu.V14167.gnm1.SWBf.genome_main.fna.gz nucl 130453 'Arachis duranensis - genome'
@@ -45,7 +48,10 @@ RUN mkblastdb Lupinus_angustifolius/Tanjil.gnm1.Qq0N/lupan.Tanjil.gnm1.Qq0N.geno
 RUN mkblastdb Lupinus_angustifolius/Tanjil.gnm1.ann1.nnV9/lupan.Tanjil.gnm1.ann1.nnV9.protein.faa.gz prot 3871 'Lupinus angustifolius - proteins'
 RUN mkblastdb Medicago_truncatula/A17_HM341.gnm4.ann2.G3ZY/medtr.A17_HM341.gnm4.ann2.G3ZY.cds.fna.gz nucl 3880 'Medicago truncatula v4.0 - CDS'
 RUN mkblastdb Medicago_truncatula/A17_HM341.gnm4.2GZ9/medtr.A17_HM341.gnm4.2GZ9.genome_main.fna.gz nucl 3880 'Medicago truncatula v4.0 - genome'
-RUN mkblastdb Medicago_truncatula/A17_HM341.gnm4.ann2.G3ZY/medtr.A17_HM341.gnm4.ann2.G3ZY.protein.faa.gz prot 3880 'Medicago_truncatula - proteins'
+RUN mkblastdb Medicago_truncatula/A17_HM341.gnm4.ann2.G3ZY/medtr.A17_HM341.gnm4.ann2.G3ZY.protein.faa.gz prot 3880 'Medicago truncatula - proteins'
+RUN mkblastdb Medicago_sativa/XinJiangDaYe.gnm1.ann1.RKB9/medsa.XinJiangDaYe.gnm1.ann1.RKB9.cds.fna.gz nucl 3879 'Medicago sativa - CDS'
+RUN mkblastdb Medicago_sativa/XinJiangDaYe.gnm1.12MR/medsa.XinJiangDaYe.gnm1.12MR.genome_main.fna.gz nucl 3879 'Medicago sativa - genome'
+RUN mkblastdb Medicago_sativa/XinJiangDaYe.gnm1.ann1.RKB9/medsa.XinJiangDaYe.gnm1.ann1.RKB9.protein.faa.gz prot 3879 'Medicago sativa - proteins'
 RUN mkblastdb Phaseolus_lunatus/G27455.gnm1.ann1.JD7C/phalu.G27455.gnm1.ann1.JD7C.cds_primaryTranscript.fna.gz nucl 3884 'Phaseolus lunatus - CDS'
 RUN mkblastdb Phaseolus_lunatus/G27455.gnm1.7NXX/phalu.G27455.gnm1.7NXX.genome_main.fna.gz nucl 3884 'Phaseolus lunatus - genome'
 RUN mkblastdb Phaseolus_lunatus/G27455.gnm1.ann1.JD7C/phalu.G27455.gnm1.ann1.JD7C.protein.faa.gz prot 3884 'Phaseolus lunatus - proteins'
