@@ -11,6 +11,8 @@ module SequenceServer
     UNIPROT_ID_PATTERN = /sp\|(\w+)\|/
     PFAM_ID_PATTERN = /(PF\d{5}\.?\d*)/
     RFAM_ID_PATTERN = /(RF\d{5})/
+    LIS_ID_PATTERN = /^.*gnm\d.*$/
+
 
     # Link generators are methods that return a Hash as defined below.
     #
@@ -116,7 +118,33 @@ module SequenceServer
         icon:  'fa-external-link'
       }
     end
+
+    def lmmrna
+      return nil unless id.match(LIS_ID_PATTERN) or title.match(LIS_ID_PATTERN)
+      lis_id = id
+      lis_id = encode lis_id
+      url = "https://mines.legumeinfo.org/legumemine/mrna:#{lis_id}"
+      {
+        order: 2,
+        title: 'LegumeMine mRNA',
+        url:   url,
+        icon:  'fa-external-link'
+      }
+    end
+
+    def lmprotein
+      return nil unless id.match(LIS_ID_PATTERN) or title.match(LIS_ID_PATTERN)
+      lis_id = id
+      lis_id = encode lis_id
+      url = "https://mines.legumeinfo.org/legumemine/protein:#{lis_id}"
+      {
+        order: 2,
+        title: 'LegumeMine protein',
+        url:   url,
+        icon:  'fa-external-link'
+      }
+    end
+    
   end
 end
-
 # [1]: https://stackoverflow.com/questions/2824126/whats-the-difference-between-uri-escape-and-cgi-escape
