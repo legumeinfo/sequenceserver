@@ -1,10 +1,10 @@
 [![gem version](https://img.shields.io/badge/version-1.0.x%20(old%20stable)-green.svg)](http://rubygems.org/gems/sequenceserver)
-[![build status](https://secure.travis-ci.org/wurmlab/sequenceserver.png?branch=1.0.x)](https://travis-ci.org/wurmlab/sequenceserver)
+[![build status](https://www.travis-ci.com/wurmlab/sequenceserver.svg?branch=1.0.x)](https://travis-ci.com/wurmlab/sequenceserver)
 [![total downloads](http://ruby-gem-downloads-badge.herokuapp.com/sequenceserver?type=total&color=brightgreen)](http://rubygems.org/gems/sequenceserver)
 [![gitter chat](https://badges.gitter.im/gitterHQ/gitter.png)](https://gitter.im/wurmlab/sequenceserver)
 
 **Beta version:** 
-[![new gem version](https://img.shields.io/badge/version-2.0%20(beta)-yellowgreen.svg)](http://rubygems.org/gems/sequenceserver) **GitHub Master:** [![build status](https://secure.travis-ci.org/wurmlab/sequenceserver.png)](https://travis-ci.org/wurmlab/sequenceserver)
+[![new gem version](https://img.shields.io/badge/version-2.0%20(beta)-yellowgreen.svg)](http://rubygems.org/gems/sequenceserver) **GitHub Master:** [![build status](https://www.travis-ci.com/wurmlab/sequenceserver.svg?branch=master)](https://travis-ci.com/wurmlab/sequenceserver)
 
 
 
@@ -24,10 +24,10 @@ If you use SequenceServer, please cite:
   (2019).](https://doi.org/10.1093/molbev/msz185)
 
 
-## Stable (version 1.0.11)
+## Stable (version 1.0.14)
 
-- Release date: June 2017
-- Works with BLAST 2.2.30
+- Release date: May 2020
+- Works with BLAST 2.2.30 and higher
 
 ### Installation
 
@@ -102,6 +102,10 @@ You will need [Node and npm](https://nodejs.org/) if you want to modify and buil
     # Build minified JS and CSS bundles
     npm run-script build
 
+Or if you are using docker, you can build the frontend code and include it in the image by specifying '--target=minify' to the docker build command:
+
+    docker build . -t seqserv-with-customisations --target=minify
+
 #### Testing
 
 We use RSpec and Capybara for testing. Our test suite covers 87% of the codebase. Running all tests can take considerable time (~2 hrs). We recommend using Travis to automatically run all tests when you push your code to your fork. Tests are also run automatically when you open a pull-request (see Getting code merged section below). Although, it may be desirable sometimes to run a single test, whole file, or all tests locally:
@@ -116,7 +120,7 @@ To run all tests in a single file:
 
 To run all tests:
 
-    bundle exec rspec spec/**/*spec*
+    bundle exec rspec
 
 #### Getting code merged
 

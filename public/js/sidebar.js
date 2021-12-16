@@ -10,6 +10,15 @@ import AlignmentExporter from './alignment_exporter'; // to download textual ali
  */
 export default React.createClass({
     /**
+     * Clear sessionStorage - useful to initiate a new search in the same tab.
+     * Passing sessionStorage.clear directly as onclick callback didn't work
+     * (on macOS Chrome).
+    */
+    clearSession: function () {
+        sessionStorage.clear();
+    },
+
+    /**
      * Event-handler for downloading fasta of all hits.
      */
     downloadFastaOfAll: function () {
@@ -84,43 +93,43 @@ export default React.createClass({
     render: function () {
         return (
             <div className="sidebar">
-                { this.props.shouldShowIndex && this.index() }
-                { this.downloads() }
+                { this.topPanelJSX() }
+                { this.downloadsPanelJSX() }
             </div>
         );
     },
 
-    index: function () {
+    topPanelJSX: function () {
+        var path = location.pathname.split('/');
+        // Get job id.
+        var job_id = path.pop();
+        // Deriving rootURL this way is required for subURI deployments
+        // - we cannot just send to '/'.
+        var rootURL = path.join('/');
+
         return (
-            <div className="index">
-                <div
-                    className="section-header-sidebar">
+            <div className="sidebar-top-panel">
+                <div className="section-header-sidebar">
                     <h4>
-                        { this.summary() }
+                        { this.summaryString() }
                     </h4>
                 </div>
-                <ul
-                    className="nav hover-reset active-bold">
-                    {
-                        _.map(this.props.data.queries, _.bind(function (query) {
-                            return (
-                                <li key={'Side_bar_'+query.id}>
-                                    <a
-                                        className="btn-link nowrap-ellipsis hover-bold"
-                                        href={'#Query_' + query.number}
-                                        title={'Query= ' + query.id + ' ' + query.title}>
-                                        {'Query= ' + query.id}
-                                    </a>
-                                </li>
-                            );
-                        }, this))
-                    }
-                </ul>
+                <div>
+                    <a href={`${rootURL}/?job_id=${job_id}`}>
+                        <i className="fa fa-pencil"></i> Edit search
+                    </a>
+                    <span className="line">|</span>
+                    <a href={`${rootURL}/`}
+                        onClick={this.clearSession}>
+                        <i className="fa fa-file-o"></i> New search
+                    </a>
+                </div>
+                { this.props.shouldShowIndex && this.indexJSX() }
             </div>
         );
     },
 
-    summary: function () {
+    summaryString: function () {
         var program = this.props.data.program;
         var numqueries = this.props.data.queries.length;
         var numquerydb = this.props.data.querydb.length;
@@ -132,7 +141,22 @@ export default React.createClass({
         );
     },
 
-    downloads: function () {
+    indexJSX: function () {
+        return <ul className="nav hover-reset active-bold"> {
+            _.map(this.props.data.queries, (query)=> {
+                return <li key={'Side_bar_'+query.id}>
+                    <a className="btn-link nowrap-ellipsis hover-bold"
+                        title={'Query= ' + query.id + ' ' + query.title}
+                        href={'#Query_' + query.number}>
+                        {'Query= ' + query.id}
+                    </a>
+                </li>;
+            })
+        }
+        </ul>;
+    },
+
+    downloadsPanelJSX: function () {
         return (
             <div className="downloads">
                 <div className="section-header-sidebar">
@@ -142,7 +166,7 @@ export default React.createClass({
                 </div>
                 <ul className="nav">
                     {
-                        !this.props.data.imported_xml && <li>
+                        !(this.props.data.imported_xml || this.props.data.non_parse_seqids) && <li>
                             <a href="#" className="btn-link download-fasta-of-all"
                                 onClick={this.downloadFastaOfAll}>
                                 FASTA of all hits
@@ -150,7 +174,7 @@ export default React.createClass({
                         </li>
                     }
                     {
-                        !this.props.data.imported_xml && <li>
+                        !(this.props.data.imported_xml || this.props.data.non_parse_seqids) && <li>
                             <a href="#" className="btn-link download-fasta-of-selected disabled"
                                 onClick={this.downloadFastaOfSelected}>
                                 FASTA of <span className="text-bold"></span> selected hit(s)

@@ -165,8 +165,7 @@ var Report = React.createClass({
      * Called for the first time after as BLAST results have been retrieved from
      * the server and added to this.state by fetchResults. Only summary overview
      * and circos would have been rendered at this point. At this stage we kick
-     * start iteratively updating 10 HSPs (and as many hits and queries) every
-     * 25 milli-seconds.
+     * start iteratively adding 1 HSP to the page every 25 milli-seconds.
      */
     componentDidUpdate: function () {
         // Log to console how long the last update take?
@@ -204,6 +203,7 @@ var Report = React.createClass({
                 results.push(<Query key={'Query_'+query.number} query={query}
                     program={this.state.program} querydb={this.state.querydb}
                     showQueryCrumbs={this.state.queries.length > 1}
+                    non_parse_seqids={this.state.non_parse_seqids}
                     imported_xml={this.state.imported_xml}
                     veryBig={this.state.veryBig} />);
             }
@@ -217,6 +217,7 @@ var Report = React.createClass({
                     results.push(<Hit key={'Query_'+query.number+'_Hit_'+hit.number} query={query}
                         hit={hit} algorithm={this.state.program} querydb={this.state.querydb}
                         selectHit={this.selectHit} imported_xml={this.state.imported_xml}
+                        non_parse_seqids={this.state.non_parse_seqids}
                         showQueryCrumbs={this.state.queries.length > 1}
                         showHitCrumbs={query.hits.length > 1}
                         veryBig={this.state.veryBig}
@@ -447,7 +448,7 @@ var Report = React.createClass({
      */
     affixSidebar: function () {
         var $sidebar = $('.sidebar');
-        var sidebarOffset = $sidebar.offset()
+        var sidebarOffset = $sidebar.offset();
         if (sidebarOffset) {
             $sidebar.affix({
                 offset: {
@@ -493,17 +494,16 @@ var Report = React.createClass({
             $hit.next('.hsp').removeClass('glow');
         }
 
+        var $a = $('.download-fasta-of-selected');
+        var $b = $('.download-alignment-of-selected');
+        
         if (num_checked >= 1)
         {
-            var $a = $('.download-fasta-of-selected');
-            var $b = $('.download-alignment-of-selected');
             $a.find('.text-bold').html(num_checked);
             $b.find('.text-bold').html(num_checked);
         }
 
         if (num_checked == 0) {
-            var $a = $('.download-fasta-of-selected');
-            var $b = $('.download-alignment-of-selected');
             $a.addClass('disabled').find('.text-bold').html('');
             $b.addClass('disabled').find('.text-bold').html('');
         }

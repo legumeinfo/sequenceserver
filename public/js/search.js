@@ -1,10 +1,12 @@
 import './jquery_world';
 import React from 'react';
 import _ from 'underscore';
+import DatabasesTree from './databases_tree';
 
 /**
  * Load necessary polyfills.
  */
+$.webshims.setOptions('basePath', '/vendor/npm/webshim@1.15.8/js-webshim/minified/shims/');
 $.webshims.polyfill('forms');
 
 /**
@@ -12,6 +14,7 @@ $.webshims.polyfill('forms');
 */
 if (performance.navigation.type == performance.navigation.TYPE_RELOAD) {
     sessionStorage.clear();
+    history.replaceState(null, '', location.href.split('?')[0]);
 }
 
 var Page = React.createClass({
@@ -205,7 +208,7 @@ var DnD = React.createClass({
 var Form = React.createClass({
 
     getInitialState: function () {
-        return { databases: {}, preDefinedOpts: {} };
+        return { databases: [], preDefinedOpts: {}, tree: {} };
     },
 
     componentDidMount: function () {
@@ -224,6 +227,7 @@ var Form = React.createClass({
              * advanced options.
              */
             this.setState({
+                tree: data['tree'],
                 databases: data['database'],
                 preSelectedDbs: data['preSelectedDbs'],
                 preDefinedOpts: data['options']
@@ -235,15 +239,24 @@ var Form = React.createClass({
             if (data['query']) {
                 this.refs.query.value(data['query']);
             }
+
+            setTimeout(function(){
+                $('.jstree_div').click();
+            }, 1000);
         }.bind(this));
 
         /* Enable submitting form on Cmd+Enter */
-        $(document).bind('keydown', _.bind(function (e) {
-            if (e.ctrlKey && e.keyCode === 13 &&
-               !$('#method').is(':disabled')) {
-                $(this.getDOMNode()).trigger('submit');
+        $(document).on('keydown', (e)=> {
+            var $button = $('#method');
+            if (!$button.is(':disabled') &&
+                e.ctrlKey && e.key === 'Enter') {
+                $button.trigger('click');
             }
-        }, this));
+        });
+    },
+
+    useTreeWidget: function () {
+        return !_.isEmpty(this.state.tree);
     },
 
     determineBlastMethod: function () {
@@ -310,6 +323,17 @@ var Form = React.createClass({
         }
     },
 
+    handleNewTabCheckbox: function () {
+        setTimeout(() => {
+            if ($('#toggleNewTab').is(':checked')) {
+                $('#blast').attr('target', '_blank');
+            }
+            else {
+                $('#blast').attr('target', '_self');
+            }
+        });
+    },
+
     render: function () {
         return (
             <div className="container">
@@ -322,11 +346,27 @@ var Form = React.createClass({
                         <ProteinNotification/>
                         <MixedNotification/>
                     </div>
+                    {this.useTreeWidget() ?
+                    <DatabasesTree ref="databases"
+                    databases={this.state.databases} tree={this.state.tree}
+                    preSelectedDbs={this.state.preSelectedDbs}
+                    onDatabaseTypeChanged={this.handleDatabaseTypeChanaged} />
+                    :
                     <Databases ref="databases" databases={this.state.databases}
                         preSelectedDbs={this.state.preSelectedDbs}
                         onDatabaseTypeChanged={this.handleDatabaseTypeChanaged} />
+                    }
                     <div className="form-group">
                         <Options ref="opts"/>
+                        <div className="col-md-2">
+                            <div className="form-group" style={{'textAlign': 'center', 'padding': '7px 0'}}>
+                                <label>
+                                    <input type="checkbox" id="toggleNewTab"
+                                        onChange={()=> { this.handleNewTabCheckbox(); }}
+                                    /> Open results in new tab
+                                </label>
+                            </div>
+                        </div>
                         <SearchButton ref="button" onAlgoChanged={this.handleAlgoChanged}/>
                     </div>
                 </form>
@@ -748,8 +788,9 @@ var Databases = React.createClass({
 
         if (this.props.preSelectedDbs) {
             var selectors = this.props.preSelectedDbs.map(db => `input[value=${db.id}]`);
-            $(...selectors).prop('checked',true);
+            $(selectors.join(',')).prop('checked',true);
             this.handleClick(this.props.preSelectedDbs[0]);
+            this.props.preSelectedDbs = null;
         }
         this.props.onDatabaseTypeChanged(this.state.type);
     }
@@ -774,7 +815,7 @@ var Options = React.createClass({
             classNames += ' yellow-background';
         }
         return (
-            <div className="col-md-8">
+            <div className="col-md-7">
                 <div className="form-group">
                     <div className="col-md-12">
                         <div className="input-group">
@@ -912,7 +953,7 @@ var SearchButton = React.createClass({
         var multi = methods.length > 1;
 
         return (
-            <div className="col-md-4">
+            <div className="col-md-3">
                 <div className="form-group">
                     <div className="col-md-12">
                         <div

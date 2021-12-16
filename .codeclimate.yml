@@ -7,25 +7,21 @@ checks:
   method-count:
     config:
       threshold: 50
-engines:
+plugins:
   rubocop:
     enabled: true
   eslint:
     enabled: true
-  csslint:
+  stylelint:
     enabled: true
-ratings:
-  paths:
-  - "**.rb"
-  - "**.js"
-  - "**.css"
-exclude_paths:
+exclude_patterns:
+- public/css/sequenceserver.min.css
+- public/sequenceserver-*.min.js
 - public/js/sequence.js
-- public/sequenceserver.min.css
-- public/sequenceserver.min.js
 - public/js/kablammo/*
 - public/vendor/**/*
 - node_modules/**/*
 - public/shims/**/*
 - public/vendor/*
 - spec/**/*
+- coverage/
