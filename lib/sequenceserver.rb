@@ -5,11 +5,7 @@ require 'resolv'
 # Top level module / namespace.
 module SequenceServer
   # The default version of BLAST that will be downloaded and configured for use.
-  BLAST_VERSION = '2.10.0+'.freeze
-  # The minimum version of BLAST that SequenceServer is happy to run with. This
-  # is for compatiblity with older database formats. Users will download BLAST
-  # themselves.
-  MIN_BLAST_VERSION = '2.9.0+'.freeze
+  BLAST_VERSION = '2.12.0+'.freeze
 
   # Default location of configuration file.
   DEFAULT_CONFIG_FILE = '~/.sequenceserver.conf'.freeze
@@ -205,15 +201,17 @@ module SequenceServer
 
       makeblastdb.scan
       fail NO_BLAST_DATABASE_FOUND, config[:database_dir] if !makeblastdb.any_formatted?
-      fail INCOMPATIBLE_BLAST_DATABASES, config[:database_dir] if makeblastdb.any_incompatible?
 
       Database.collection = makeblastdb.formatted_fastas
       Database.each do |database|
-        logger.debug("Found #{database.type} database '#{database.title}'" \
-                     " at '#{database.name}'")
+        logger.debug "Found #{database.type} database '#{database.title}' at '#{database.path}'"
         if database.non_parse_seqids?
-          logger.warn("Database '#{database.title}' created without" \
-            " -parse_seqids option. Will disable FASTA download links.")
+          logger.warn "Database '#{database.title}' was created without using the" \
+                      ' -parse_seqids option of makeblastdb. FASTA download will' \
+                      ' not work correctly'
+        elsif database.v4?
+          logger.warn "Database '#{database.title}' is of older format. Mixing" \
+                      ' old and new format databases can be problematic.'
         end
       end
     end
@@ -249,7 +247,7 @@ module SequenceServer
       end
       version = out.split[1]
       fail BLAST_NOT_INSTALLED_OR_NOT_EXECUTABLE if version.empty?
-      fail BLAST_NOT_COMPATIBLE, version unless is_compatible(version, MIN_BLAST_VERSION)
+      fail BLAST_NOT_COMPATIBLE, version unless is_compatible(version, BLAST_VERSION)
     end
 
     def server_url
