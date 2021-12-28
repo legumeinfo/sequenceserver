@@ -98,7 +98,7 @@ module SequenceServer
         erb :search, layout: true
       else
         job = Job.create(params)
-        redirect to("/#{job.id}")
+        redirect to("sequenceserver/#{job.id}")
       end
     end
 
