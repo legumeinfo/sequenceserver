@@ -9,7 +9,7 @@ import * as Helpers from './visualisation_helpers';
 
 class Graph {
     static name() {
-        return 'Length distribution of hits';
+        return 'Length distribution of matching sequences';
     }
 
     static className() {
@@ -69,8 +69,7 @@ class Graph {
             .range([0, this._width]);
         this._bins = d3.layout.histogram()
             .range(this._scale_x.domain())
-            .bins(this._scale_x.ticks(50))
-            (this._data);
+            .bins(this._scale_x.ticks(50))(this._data);
         this._scale_y = d3.scale.linear()
             .domain([0, d3.max(this._bins, function(d) { return d.length; })])
             .range([this._height, 0]).nice();
@@ -129,14 +128,15 @@ class Graph {
             bin.map(function (d,i) {
                 var y1 = bin.length - (i+1);
                 var len_index = _.findIndex(self.query.hits, {length: d});
+                var evalue = self.query.hits[len_index].hsps[0].evalue;
                 var item = {
                     value: d,
                     id: self.query.hits[len_index].id,
-                    evalue: self.query.hits[len_index].evalue,
+                    evalue: evalue,
                     url: '#Query_'+self.query.number+'_hit_'+self.query.hits[len_index].number,
                     y0: y0,
                     y1: y0 += (y1 - y0),
-                    color: Helpers.get_colors_for_evalue(self.query.hits[len_index].evalue,self.query.hits)
+                    color: Helpers.get_colors_for_evalue(evalue,self.query.hits)
                 };
                 inner_data.push(item);
             });

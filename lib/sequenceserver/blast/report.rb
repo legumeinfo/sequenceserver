@@ -25,6 +25,7 @@ module SequenceServer
       def initialize(job)
         super do
           @queries = []
+          @querydb = job.databases
         end
       end
 
@@ -42,7 +43,8 @@ module SequenceServer
         }.update(search_id: job.id,
                  submitted_at: job.submitted_at.utc,
                  imported_xml: !!job.imported_xml_file,
-                 seqserv_version: SequenceServer::VERSION).to_json
+                 seqserv_version: SequenceServer::VERSION,
+                 non_parse_seqids: !!job.databases&.any?(&:non_parse_seqids?)).to_json
       end
 
       private
@@ -80,13 +82,12 @@ module SequenceServer
       # Get database information (title and type) from job yaml or from XML.
       # Sets `querydb` and `dbtype` attributes.
       def extract_db_info(ir)
-        if job.databases.empty?
+        if @querydb.empty?
           @querydb = ir[3].split.map do |path|
             { title: File.basename(path) }
           end
           @dbtype = dbtype_from_program
         else
-          @querydb = job.databases
           @dbtype = @querydb.first.type
         end
       end
@@ -176,6 +177,7 @@ module SequenceServer
       def parse_xml(xml)
         node_to_array Ox.parse(xml).root
       rescue Ox::ParseError
+        fail 'Error parsing XML file' if job.imported_xml_file
         fail InputError, <<~MSG
           BLAST generated incorrect XML output. This can happen if sequence ids in your
           databases are not unique across all files. As a temporary workaround, you can

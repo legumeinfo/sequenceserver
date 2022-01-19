@@ -19,14 +19,14 @@ module SequenceServer
   # SequenceServer will always place BLAST database files alongside input FASTA,
   # and use `parse_seqids` option of `makeblastdb` to format databases.
   Database = Struct.new(:name, :title, :type, :nsequences, :ncharacters,
-                        :updated_on) do
+                        :updated_on, :format, :categories) do
 
     extend Forwardable
 
     def_delegators SequenceServer, :config, :sys
 
     def initialize(*args)
-      args[2].downcase! # database type
+      args[2].downcase!   # type
       args.each(&:freeze)
       super
 
@@ -34,6 +34,7 @@ module SequenceServer
     end
 
     attr_reader :id
+    alias path name
 
     def retrieve(accession, coords = nil)
       cmd = "blastdbcmd -db #{name} -entry '#{accession}'"
@@ -48,10 +49,36 @@ module SequenceServer
       nil
     end
 
-    def include?(accession)
-      cmd = "blastdbcmd -entry '#{accession}' -db #{name}"
-      out, = sys(cmd, path: config[:bin])
-      !out.empty?
+    # Returns true if the database contains the given sequence id.
+    # Returns false otherwise.
+    def include?(id)
+      cmd = "blastdbcmd -entry '#{id}' -db #{name}"
+      sys(cmd, path: config[:bin]) rescue false
+    end
+
+    def v4?
+      format == '4'
+    end
+
+    def v5?
+      format == '5'
+    end
+
+    # Return true if the database was _not_ created using the -parse_seqids
+    # option of makeblastdb.
+    def non_parse_seqids?
+      return if alias?
+      case format
+      when '5'
+        (%w[nog nos pog pos] & extensions).length != 2
+      when '4'
+        (%w[nog nsd nsi pod psd psi] & extensions).length != 3
+      end
+    end
+
+    # Returns true if the database was created using blastdb_aliastool.
+    def alias?
+      (%w[nal pal] & extensions).length == 1 && extensions.count == 1
     end
 
     def ==(other)
@@ -64,6 +91,16 @@ module SequenceServer
 
     def to_json(*args)
       to_h.update(id: id).to_json(*args)
+    end
+
+    private
+
+    def extensions
+      # The glob pattern used here is quite relaxed. This is to capture
+      # multipart databases as well. It is possible that non-blast-database
+      # extensions may also be picked. However, that shouldn't be a problem
+      # as we only check whether certain required extensions are present or not.
+      @extensions ||= Dir["#{path}*{n,p}*"].map { |p| p.split('.').last }.sort.uniq
     end
   end
 
@@ -80,9 +117,8 @@ module SequenceServer
         @collection ||= {}
       end
 
-      def collection=(databases_attrs)
-        databases_attrs.each do |db_attrs|
-          db = Database.new(*db_attrs)
+      def collection=(databases)
+        databases.each do |db|
           collection[db.id] = db
         end
       end
@@ -100,6 +136,30 @@ module SequenceServer
 
       def all
         collection.values
+      end
+
+      def tree
+        all.each_with_object({}) do |db, data|
+          data[db.type] ||= []
+          use_parent = '#'
+          db.categories.each_with_index do |entry, index|
+            parent = index.zero? ? '#' : db.categories[0..(index - 1)].join('-')
+            use_id = db.categories[0..index].join('-')
+            element = { id: use_id, parent: parent, text: entry }
+            data[db.type] << element unless data[db.type].include?(element)
+            use_parent = use_id
+          end
+
+          data[db.type] <<
+            {
+              id: db.id,
+              parent: use_parent,
+              text: db.title,
+              icon: 'glyphicon glyphicon-file'
+            }
+
+          yield(db, data[db.type].last) if block_given?
+        end
       end
 
       def each(&block)

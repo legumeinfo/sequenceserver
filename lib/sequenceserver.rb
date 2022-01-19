@@ -5,11 +5,7 @@ require 'resolv'
 # Top level module / namespace.
 module SequenceServer
   # The default version of BLAST that will be downloaded and configured for use.
-  BLAST_VERSION = '2.10.0+'.freeze
-  # The minimum version of BLAST that SequenceServer is happy to run with. This
-  # is for compatiblity with older database formats. Users will download BLAST
-  # themselves.
-  MIN_BLAST_VERSION = '2.9.0+'.freeze
+  BLAST_VERSION = '2.12.0+'.freeze
 
   # Default location of configuration file.
   DEFAULT_CONFIG_FILE = '~/.sequenceserver.conf'.freeze
@@ -78,9 +74,9 @@ module SequenceServer
       Thread.abort_on_exception = true if development?
 
       # Now locate binaries, scan databases directory, require any plugin files.
+      load_extension
       init_binaries
       init_database
-      load_extension
 
       # The above methods validate bin dir, database dir, and path to plugin
       # files. Port and host settings don't need to be validated: if running
@@ -141,7 +137,8 @@ module SequenceServer
         puts "     -  http://#{ip_address}:#{config[:port]}"
         puts "     -  http://#{hostname}:#{config[:port]}" if hostname
         puts '   To share your setup with anyone in the world, ask your IT team'
-        puts '   for a public IP address.'
+        puts '   for a public IP address or consider the SequenceServer cloud'
+        puts '   hosting service: https://sequenceserver.com/cloud'
         puts '   To disable sharing, set :host: key in config file to 127.0.0.1'
         puts '   and restart server.'
       end
@@ -205,12 +202,19 @@ module SequenceServer
 
       makeblastdb.scan
       fail NO_BLAST_DATABASE_FOUND, config[:database_dir] if !makeblastdb.any_formatted?
-      fail INCOMPATIBLE_BLAST_DATABASES, config[:database_dir] if makeblastdb.any_incompatible?
 
       Database.collection = makeblastdb.formatted_fastas
       Database.each do |database|
-        logger.debug("Found #{database.type} database '#{database.title}'" \
-                     " at '#{database.name}'")
+        logger.debug "Found #{database.type} database '#{database.title}' at '#{database.path}'"
+        if database.non_parse_seqids?
+          logger.warn "Database '#{database.title}' was created without using the" \
+                      ' -parse_seqids option of makeblastdb. FASTA download will' \
+                      " not work correctly (path: '#{database.path}')."
+        elsif database.v4?
+          logger.warn "Database '#{database.title}' is of older format. Mixing" \
+                      ' old and new format databases can be problematic' \
+                      "(path: '#{database.path}')."
+        end
       end
     end
 
@@ -245,7 +249,7 @@ module SequenceServer
       end
       version = out.split[1]
       fail BLAST_NOT_INSTALLED_OR_NOT_EXECUTABLE if version.empty?
-      fail BLAST_NOT_COMPATIBLE, version unless is_compatible(version, MIN_BLAST_VERSION)
+      fail BLAST_NOT_COMPATIBLE, version unless is_compatible(version, BLAST_VERSION)
     end
 
     def server_url

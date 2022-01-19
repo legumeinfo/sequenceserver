@@ -1,10 +1,12 @@
 import './jquery_world';
 import React from 'react';
 import _ from 'underscore';
+import DatabasesTree from './databases_tree';
 
 /**
  * Load necessary polyfills.
  */
+$.webshims.setOptions('basePath', '/vendor/npm/webshim@1.15.8/js-webshim/minified/shims/');
 $.webshims.polyfill('forms');
 
 /**
@@ -206,7 +208,7 @@ var DnD = React.createClass({
 var Form = React.createClass({
 
     getInitialState: function () {
-        return { databases: {}, preDefinedOpts: {} };
+        return { databases: [], preDefinedOpts: {}, tree: {} };
     },
 
     componentDidMount: function () {
@@ -225,6 +227,7 @@ var Form = React.createClass({
              * advanced options.
              */
             this.setState({
+                tree: data['tree'],
                 databases: data['database'],
                 preSelectedDbs: data['preSelectedDbs'],
                 preDefinedOpts: data['options']
@@ -236,6 +239,10 @@ var Form = React.createClass({
             if (data['query']) {
                 this.refs.query.value(data['query']);
             }
+
+            setTimeout(function(){
+                $('.jstree_div').click();
+            }, 1000);
         }.bind(this));
 
         /* Enable submitting form on Cmd+Enter */
@@ -246,6 +253,10 @@ var Form = React.createClass({
                 $button.trigger('click');
             }
         });
+    },
+
+    useTreeWidget: function () {
+        return !_.isEmpty(this.state.tree);
     },
 
     determineBlastMethod: function () {
@@ -335,9 +346,16 @@ var Form = React.createClass({
                         <ProteinNotification/>
                         <MixedNotification/>
                     </div>
+                    {this.useTreeWidget() ?
+                    <DatabasesTree ref="databases"
+                    databases={this.state.databases} tree={this.state.tree}
+                    preSelectedDbs={this.state.preSelectedDbs}
+                    onDatabaseTypeChanged={this.handleDatabaseTypeChanaged} />
+                    :
                     <Databases ref="databases" databases={this.state.databases}
                         preSelectedDbs={this.state.preSelectedDbs}
                         onDatabaseTypeChanged={this.handleDatabaseTypeChanaged} />
+                    }
                     <div className="form-group">
                         <Options ref="opts"/>
                         <div className="col-md-2">
@@ -687,6 +705,7 @@ var Databases = React.createClass({
             $(`.${type} .database input:checked`).click();
             break;
         }
+        this.forceUpdate();
     },
 
     render: function () {
@@ -770,7 +789,7 @@ var Databases = React.createClass({
 
         if (this.props.preSelectedDbs) {
             var selectors = this.props.preSelectedDbs.map(db => `input[value=${db.id}]`);
-            $(...selectors).prop('checked',true);
+            $(selectors.join(',')).prop('checked',true);
             this.handleClick(this.props.preSelectedDbs[0]);
             this.props.preSelectedDbs = null;
         }

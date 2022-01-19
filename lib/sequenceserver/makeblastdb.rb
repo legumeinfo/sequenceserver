@@ -11,17 +11,6 @@ module SequenceServer
   #   makeblastdb.scan && makeblastdb.run
   #
   class MAKEBLASTDB
-    # We want V5 databases created using -parse_seqids for proper function of
-    # SequenceServer. This means each database should be comprised of at least 9
-    # files with the following extensions. Databases created by us will have two
-    # additional files with the extensions nhd and nhi, or phd and phi, due to
-    # the use of -hash_index option. Finally, multipart databases will have one
-    # additional file with the extension nal or pal.
-    REQUIRED_EXTENSIONS = {
-      'nucleotide' => %w{ndb nhr nin nog nos not nsq ntf nto}.freeze,
-      'protein' => %w{pdb phr pin pog pos pot psq ptf pto}.freeze
-    }
-
     extend Forwardable
 
     def_delegators SequenceServer, :config, :sys
@@ -70,18 +59,12 @@ module SequenceServer
     # Returns true if the databases directory contains one or more incompatible
     # databases.
     #
-    # Note that it is okay to only use V4 databases or only V5 databases. It is
+    # Note that it is okay to only use V4 databases or only V5 databases.
     # Incompatibility arises when they are mixed.
     def any_incompatible?
-      return false if @fastas_to_reformat.empty?
-      # We need to compare @fastas_to_reformat to @formatted_fastas, but the
-      # latter contains extra attributes. However, the first attribute, i.e,
-      # path is common to both and sufficient for our needs.
-      to_reformat = @fastas_to_reformat.map(&:first)
-      formatted = @formatted_fastas.map(&:first)
-      # Check that they are not equal. Using intersection operator ensures
-      # comparison even if their order differs.
-      formatted & to_reformat != formatted
+      return false if @formatted_fastas.all? { |ff| ff.v4? || ff.alias? }
+      return false if @formatted_fastas.all? { |ff| ff.v5? || ff.alias? }
+      true
     end
 
     # Runs makeblastdb on each file in `@fastas_to_format` and
@@ -109,8 +92,8 @@ module SequenceServer
       # Make the intent clear as well as ensure the program won't crash if
       # we accidentally call reformat before calling scan.
       return unless @fastas_to_reformat
-      @fastas_to_reformat.select do |path, title, type|
-        make_blast_database('reformat', path, title, type)
+      @fastas_to_reformat.select do |path, title, type, non_parse_seqids|
+        make_blast_database('reformat', path, title, type, non_parse_seqids)
       end
     end
 
@@ -120,34 +103,36 @@ module SequenceServer
     # formatted. Adds to @formatted_fastas.
     def determine_formatted_fastas
       blastdbcmd.each_line do |line|
-        path, title, type, *rest = line.split('	')
+        path, *rest = line.chomp.split("\t")
         next if multipart_database_name?(path)
-        @formatted_fastas << [path, title, type.strip.downcase, *rest]
+        rest << get_categories(path)
+        @formatted_fastas << Database.new(path, *rest)
       end
     end
 
     # Determines which FASTA files in the database directory require
     # reformatting. Adds to @fastas_to_format.
     def determine_fastas_to_reformat
-      @formatted_fastas.each do |path, title, type|
-        required_extensions = REQUIRED_EXTENSIONS[type]
-        exts = Dir["#{path}.*"].map { |p| p.split('.').last }.sort
-        next if (exts & required_extensions) == required_extensions
-
-        @fastas_to_reformat << [path, title, type]
+      @formatted_fastas.each do |ff|
+        if ff.v4? || ff.non_parse_seqids?
+          @fastas_to_reformat << [ff.path, ff.title, ff.type, ff.non_parse_seqids?]
+        end
       end
     end
 
     # Determines which FASTA files in the database directory are
     # unformatted. Adds to @fastas_to_format.
     def determine_unformatted_fastas
-      Find.find(database_dir) do |path|
+      # Add a trailing slash to database_dir - Find.find doesn't work as
+      # expected without the trailing slash if database_dir is a symlink
+      # inside a docker container.
+      Find.find(database_dir + '/') do |path|
         next if File.directory?(path)
         next unless probably_fasta?(path)
         next if @formatted_fastas.any? { |f| f[0] == path }
 
         @fastas_to_format << [path,
-          make_db_title(File.basename(path)),
+          make_db_title(path),
           guess_sequence_type_in_fasta(path)]
       end
     end
@@ -157,7 +142,7 @@ module SequenceServer
     # by `determine_formatted_fastas`.
     def blastdbcmd
       cmd = "blastdbcmd -recursive -list #{config[:database_dir]}" \
-            ' -list_outfmt "%f	%t	%p	%n	%l	%d"'
+            ' -list_outfmt "%f	%t	%p	%n	%l	%d	%v"'
       out, err = sys(cmd, path: config[:bin])
       errpat = /BLAST Database error/
       fail BLAST_DATABASE_ERROR.new(cmd, err) if err.match(errpat)
@@ -167,10 +152,11 @@ module SequenceServer
     end
 
     # Create BLAST database, given FASTA file and sequence type in FASTA file.
-    def make_blast_database(action, file, title, type)
+    def make_blast_database(action, file, title, type, non_parse_seqids = false)
       return unless make_blast_database?(action, file, type)
       title = confirm_database_title(title)
-      taxonomy = taxid_map(file) || taxid
+      extract_fasta(file) unless File.exist?(file)
+      taxonomy = taxid_map(file, non_parse_seqids) || taxid
       _make_blast_database(file, type, title, taxonomy)
     end
 
@@ -200,11 +186,10 @@ module SequenceServer
 
     # Check if a '.taxid_map.txt' file exists. If not, try getting it
     # using blastdbcmd.
-    def taxid_map(db)
+    def taxid_map(db, non_parse_seqids)
+      return if non_parse_seqids
       taxid_map = db.sub(/#{File.extname(db)}$/, '.taxid_map.txt')
-      if !File.exist?(taxid_map) || File.zero?(taxid_map)
-        extract_taxid_map(db, taxid_map)
-      end
+      extract_taxid_map(db, taxid_map) if !File.exist?(taxid_map)
       "-taxid_map #{taxid_map}" if !File.zero?(taxid_map)
     end
 
@@ -213,22 +198,23 @@ module SequenceServer
     # Using 0 as taxid is equivalent to not setting taxid for the database
     # that will be created.
     def taxid
+      default = 0
       print 'Enter taxid (optional): '
       user_response = STDIN.gets.strip
-      "-taxid #{user_response ? Integer(user_response) : 0}"
+      "-taxid #{user_response.empty? && default || Integer(user_response)}"
     rescue ArgumentError # presumably from call to Interger()
       puts 'taxid should be a number'
       retry
     end
 
     def _make_blast_database(file, type, title, taxonomy)
-      extract_fasta(file) unless File.exist?(file)
-      cmd = "makeblastdb -parse_seqids -hash_index -in #{file} " \
-            "-dbtype #{type.to_s.slice(0, 4)} -title '#{title}'" \
+      cmd = "makeblastdb -parse_seqids -hash_index -in '#{file}'" \
+            " -dbtype #{type.to_s.slice(0, 4)} -title '#{title}'" \
             " #{taxonomy}"
       out, err = sys(cmd, path: config[:bin])
       puts out.strip
       puts err.strip
+      return true
     rescue CommandFailed => e
       puts <<~MSG
         Could not create BLAST database for: #{file}
@@ -278,8 +264,16 @@ module SequenceServer
       !(db_name.match(%r{.+/\S+\.\d{2,3}$}).nil?)
     end
 
+    def get_categories(path)
+      path
+        .gsub(config[:database_dir], '') # remove database_dir from path
+        .split('/')
+        .reject(&:empty?)[0..-2] # the first entry might be '' if database_dir does not end with /
+    end
+
     # Returns true if first character of the file is '>'.
     def probably_fasta?(file)
+      return false unless file.match(/((cds)|(fasta)|(fna)|(pep)|(cdna)|(fa)|(prot)|(fas)|(genome)|(nuc)|(dna)|(nt))$/i)
       File.read(file, 1) == '>'
     end
 
@@ -288,7 +282,8 @@ module SequenceServer
     # For example:
     # Cobs1.4.proteins.fasta -> Cobs 1.4 proteins
     # S_invicta.xx.2.5.small.nucl.fa -> S invicta xx 2.5 small nucl
-    def make_db_title(db_name)
+    def make_db_title(path)
+      db_name = File.basename(path)
       db_name.tr!('"', "'")
       # removes .fasta like extension names
       db_name.gsub!(File.extname(db_name), '')
