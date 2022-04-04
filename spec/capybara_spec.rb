@@ -8,7 +8,7 @@ describe 'a browser', type: :feature, js: true do
     fill_in('sequence', with: nucleotide_query)
 
     prot = page.evaluate_script("$('.protein .database').text().trim()")
-    prot.should eq("2020-11 Swiss-Prot insecta Sinvicta 2-2-3 prot subset")
+    prot.should eq("2020-11 Swiss-Prot insecta 2020-11-Swiss-Prot insecta (subset taxid 102803) Sinvicta 2-2-3 prot subset without_parse_seqids.fa")
 
     nucl = page.evaluate_script("$('.nucleotide .database').text().trim()")
     nucl.should eq("Sinvicta 2-2-3 cdna subset Solenopsis invicta gnG subset funky ids (v5)")
@@ -286,8 +286,8 @@ describe 'a browser', type: :feature, js: true do
     expect(File.basename(downloaded_file)).to eq('Alignment-Overview-Query_1.png')
     clear_downloads
 
-    ## Check that there is a length distribution of hits.
-    page.should have_content('Length distribution of hits')
+    ## Check that there is a length distribution of matching sequences.
+    page.should have_content('Length distribution of matching sequences')
     page.execute_script("$('.length-distribution > .grapher-header > h4').click()")
     sleep 1
 

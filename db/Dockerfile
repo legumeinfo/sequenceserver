@@ -1,4 +1,4 @@
-FROM ncbi/blast:2.10.0
+FROM ncbi/blast:2.12.0
 
 WORKDIR /db
 VOLUME ["/db"]
