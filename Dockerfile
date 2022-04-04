@@ -93,3 +93,5 @@ FROM final
 # soybase/legumeinfo: bake taxdb into image for efficiency
 # (emulate "bundle exec bin/sequenceserver --download-taxdb")
 RUN bash -o pipefail -c 'curl --ipv4 -C - ftp://ftp.ncbi.nlm.nih.gov/blast/db/taxdb.tar.gz | tar -C ~/.sequenceserver -xzf -'
+# display BLAST database titles in directory hierarchy tree
+RUN printf ':databases_widget: tree\n' >> ~/.sequenceserver.conf
