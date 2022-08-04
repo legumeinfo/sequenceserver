@@ -54,26 +54,16 @@ module SequenceServer
       end.to raise_error(NO_BLAST_DATABASE_FOUND)
     end
 
-    # database_dir, when correctly set, should not contain a mix of v4 & v5
-    # databases.
-    it "raises appropriate error if database_dir contain a mix of v4 & v5" \
-       'databases' do
-      expect do
-        SequenceServer.init(database_dir: File.join(__dir__, 'database'))
-      end.to raise_error(INCOMPATIBLE_BLAST_DATABASES)
-    end
-
-
     # num_threads, if set, should a number not less than 1.
     it 'raises appropriate error if num_threads incorrectly set' do
       # Raise if not a number.
       expect do
-        SequenceServer.init(num_threads: 'foo')
+        SequenceServer.init(database_dir: File.join(__dir__, 'database'), num_threads: 'foo')
       end.to raise_error(NUM_THREADS_INCORRECT)
 
       # Raise if less than 1.
       expect do
-        SequenceServer.init(num_threads: 0)
+        SequenceServer.init(database_dir: File.join(__dir__, 'database'), num_threads: 0)
       end.to raise_error(NUM_THREADS_INCORRECT)
     end
 

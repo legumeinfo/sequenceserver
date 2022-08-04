@@ -24,6 +24,7 @@ module SequenceServer
   require 'sequenceserver/job_remover'
   require 'sequenceserver/exceptions'
   require 'sequenceserver/sys'
+  require 'sequenceserver/refinements'
 
   # The singleton methods defined below constitute the "runtime" environment of
   # SequenceServer.
@@ -137,7 +138,8 @@ module SequenceServer
         puts "     -  http://#{ip_address}:#{config[:port]}"
         puts "     -  http://#{hostname}:#{config[:port]}" if hostname
         puts '   To share your setup with anyone in the world, ask your IT team'
-        puts '   for a public IP address.'
+        puts '   for a public IP address or consider the SequenceServer cloud'
+        puts '   hosting service: https://sequenceserver.com/cloud'
         puts '   To disable sharing, set :host: key in config file to 127.0.0.1'
         puts '   and restart server.'
       end
@@ -208,10 +210,11 @@ module SequenceServer
         if database.non_parse_seqids?
           logger.warn "Database '#{database.title}' was created without using the" \
                       ' -parse_seqids option of makeblastdb. FASTA download will' \
-                      ' not work correctly'
+                      " not work correctly (path: '#{database.path}')."
         elsif database.v4?
           logger.warn "Database '#{database.title}' is of older format. Mixing" \
-                      ' old and new format databases can be problematic.'
+                      ' old and new format databases can be problematic' \
+                      "(path: '#{database.path}')."
         end
       end
     end
