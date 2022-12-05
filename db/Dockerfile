@@ -38,7 +38,7 @@ RUN mkblastdb Pisum/sativum/genomes/Cameor.gnm1.P4FG/pissa.Cameor.gnm1.P4FG.geno
 RUN mkblastdb Trifolium/pratense/genomes/MilvusB.gnm2.gNmT/tripr.MilvusB.gnm2.gNmT.genome_main.fna.gz nucl 57577 'Trifolium pratense Milvus B v2 genome'
 RUN mkblastdb Trifolium/subterraneum/genomes/Daliak.gnm2.VJZB/trisu.Daliak.gnm2.VJZB.genome_main.fna.gz nucl 3900 'Trifolium subterraneum Daliak v2 genome'
 RUN mkblastdb Vigna/angularis/genomes/Gyeongwon.gnm3.JyYC/vigan.Gyeongwon.gnm3.JyYC.genome_main.fna.gz nucl 3914 'Vigna angularis Gyeongwon v3 genome'
-RUN mkblastdb Vigna/radiata/genomes/VC1973A.gnm6.3nL8/vigra.VC1973A.gnm6.3nL8.genome_main.fna.gz nucl 157791 'Vigna radiata VC1973A v6 genome'
+RUN mkblastdb Vigna/radiata/genomes/VC1973A.gnm7.SB53/vigra.VC1973A.gnm7.SB53.genome_main.fna.gz nucl 157791 'Vigna radiata VC1973A v7 genome'
 RUN mkblastdb Vigna/unguiculata/genomes/IT97K-499-35.gnm1.QnBW/vigun.IT97K-499-35.gnm1.QnBW.genome_main.fna.gz nucl 3917 'Vigna unguiculata IT97K-499-35 v1 genome'
 
 WORKDIR "/db/mRNA_Sequence_Collection"
@@ -72,7 +72,7 @@ RUN mkblastdb Pisum/sativum/annotations/Cameor.gnm1.ann1.7SZR/pissa.Cameor.gnm1.
 RUN mkblastdb Trifolium/pratense/annotations/MilvusB.gnm2.ann1.DFgp/tripr.MilvusB.gnm2.ann1.DFgp.mrna.fna.gz nucl 57577 'Trifolium pratense Milvus B v2.1 mRNAs'
 RUN mkblastdb Trifolium/subterraneum/annotations/Daliak.gnm2.ann1.MFKF/trisu.Daliak.gnm2.ann1.MFKF.mrna_primary.fna.gz nucl 3900 'Trifolium subterraneum Daliak v2.1 mRNAs'
 RUN mkblastdb Vigna/angularis/annotations/Gyeongwon.gnm3.ann1.3Nz5/vigan.Gyeongwon.gnm3.ann1.3Nz5.mrna_primary.fna.gz nucl 3914 'Vigna angularis Gyeongwon v3.1 mRNAs'
-RUN mkblastdb Vigna/radiata/annotations/VC1973A.gnm6.ann1.M1Qs/vigra.VC1973A.gnm6.ann1.M1Qs.mrna.fna.gz nucl 157791 'Vigna radiata VC1973A v6.1 mRNAs'
+RUN mkblastdb Vigna/radiata/annotations/VC1973A.gnm7.ann1.RWBG/vigra.VC1973A.gnm7.ann1.RWBG.mrna.fna.gz nucl 157791 'Vigna radiata VC1973A v7.1 mRNAs'
 RUN mkblastdb Vigna/unguiculata/annotations/IT97K-499-35.gnm1.ann2.FD7K/vigun.IT97K-499-35.gnm1.ann2.FD7K.mrna_primary.fna.gz nucl 3917 'Vigna unguiculata IT97K-499-35 v1.2 mRNAs'
 
 WORKDIR "/db/Protein_Sequence_Collection"
@@ -106,6 +106,6 @@ RUN mkblastdb Pisum/sativum/annotations/Cameor.gnm1.ann1.7SZR/pissa.Cameor.gnm1.
 RUN mkblastdb Trifolium/pratense/annotations/MilvusB.gnm2.ann1.DFgp/tripr.MilvusB.gnm2.ann1.DFgp.protein_primary.faa.gz prot 57577 'Trifolium pratense Milvus B v2.1 proteins'
 RUN mkblastdb Trifolium/subterraneum/annotations/Daliak.gnm2.ann1.MFKF/trisu.Daliak.gnm2.ann1.MFKF.protein_primary.faa.gz prot 3900 'Trifolium subterraneum Daliak v2.1 proteins'
 RUN mkblastdb Vigna/angularis/annotations/Gyeongwon.gnm3.ann1.3Nz5/vigan.Gyeongwon.gnm3.ann1.3Nz5.protein_primary.faa.gz prot 3914 'Vigna angularis Gyeongwon v3.1 proteins'
-RUN mkblastdb Vigna/radiata/annotations/VC1973A.gnm6.ann1.M1Qs/vigra.VC1973A.gnm6.ann1.M1Qs.protein.faa.gz prot 157791 'Vigna radiata VC1973A v6.1 proteins'
+RUN mkblastdb Vigna/radiata/annotations/VC1973A.gnm7.ann1.RWBG/vigra.VC1973A.gnm7.ann1.RWBG.protein.faa.gz prot 157791 'Vigna radiata VC1973A v7.1 proteins'
 RUN mkblastdb Vigna/unguiculata/annotations/IT97K-499-35.gnm1.ann2.FD7K/vigun.IT97K-499-35.gnm1.ann2.FD7K.protein_primary.faa.gz prot 3917 'Vigna unguiculata IT97K-499-35 v1.2 proteins'
 
