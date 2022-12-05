@@ -76,19 +76,17 @@ FROM node:15-alpine3.12 AS node
 
 RUN apk add --no-cache git
 WORKDIR /usr/src/app
-COPY ./package.json .
+COPY ./package.json ./package-lock.json ./webpack.config.js ./babel.config.js ./
 RUN npm install
 ENV PATH=${PWD}/node_modules/.bin:${PATH}
 COPY public public
 RUN npm run-script build
 
-## Stage 5 (optional) minify
-FROM final AS minify
+## soybase: always build JS to get database_tree.js customization
+FROM final
 
 COPY --from=node /usr/src/app/public/sequenceserver-*.min.js public/
 COPY --from=node /usr/src/app/public/css/sequenceserver.min.css public/css/
-
-FROM final
 
 # soybase/legumeinfo: bake taxdb into image for efficiency
 # (emulate "bundle exec bin/sequenceserver --download-taxdb")

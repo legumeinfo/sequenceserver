@@ -515,12 +515,14 @@ input[type=checkbox] {
 }
 
 .hsp {
-  padding: 1px 0 1px 2px;
+  padding: 1px 0 20px 2px;
 }
 
 .hsp-stats {
-  font-size: 12px;
+  font-size: 13px;
+  letter-spacing: 0.7px;
   color: #5f5f5f;
+  font-weight: 600;
 }
 
 .hsp-lines {
@@ -620,4 +622,18 @@ input[type=checkbox] {
 /* CSS class to facilitate the hit header wrapping */
 .hit-header {
   display: table-cell;
+}
+
+
+/** For advanced params dropdown **/
+.input-group-btn {
+  vertical-align: top;
+}
+#advanced-params-dropdown {
+  padding: 0;
+}
+#advanced-params-dropdown li {
+  padding: 10px;
+  cursor: pointer;
+  letter-spacing: 1px;
 }
