@@ -70,7 +70,12 @@ module SequenceServer
             icon:  'fa-link'
           }
       else
-          url = "https://www.legumefederation.org/en/linkout_mgr/?seqname=" + id + "&start=" + coordinates[1][0].to_s() + "&end=" + coordinates[1][1].to_s()
+          url = ""
+          if coordinates[1][0] <= coordinates[1][1]
+            url = "https://www.legumefederation.org/en/linkout_mgr/?seqname=" + id + "&start=" + coordinates[1][0].to_s() + "&end=" + coordinates[1][1].to_s()
+          else
+            url = "https://www.legumefederation.org/en/linkout_mgr/?seqname=" + id + "&start=" + coordinates[1][1].to_s() + "&end=" + coordinates[1][0].to_s()
+          end
           {
             order: 2,
             title: 'LIS region linkouts',
