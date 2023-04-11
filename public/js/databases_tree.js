@@ -47,6 +47,11 @@ export default class extends Databases {
             'checkbox': {
                 'keep_selected_style': false
             }
+        })
+        .bind("ready.jstree", function(event, data) {
+            // expand all databases by default
+            // https://stackoverflow.com/a/37965291
+            $(this).jstree("open_all");
         });
     }
 

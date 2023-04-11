@@ -7,11 +7,6 @@ module SequenceServer
     include ERB::Util
     alias encode url_encode
 
-    NCBI_ID_PATTERN    = /gi\|(\d+)\|/
-    UNIPROT_ID_PATTERN = /sp\|(\w+)\|/
-    PFAM_ID_PATTERN = /(PF\d{5}\.?\d*)/
-    RFAM_ID_PATTERN = /(RF\d{5})/
-
     # Link generators are methods that return a Hash as defined below.
     #
     # {
@@ -65,55 +60,79 @@ module SequenceServer
     #     query_coords = coordinates[0]
     #     hit_coords = coordinates[1]
 
-    def ncbi
-      return nil unless id.match(NCBI_ID_PATTERN) or title.match(NCBI_ID_PATTERN)
-      ncbi_id = Regexp.last_match[1]
-      ncbi_id = encode ncbi_id
-      url = "https://www.ncbi.nlm.nih.gov/#{dbtype}/#{ncbi_id}"
-      {
-        order: 2,
-        title: 'NCBI',
-        url:   url,
-        icon:  'fa-external-link'
-      }
+    def lis
+      if id.match("gnm.*\.ann") 
+          url = "https://www.legumefederation.org/en/linkout_mgr/?gene=" + id
+          {
+            order: 2,
+            title: 'LIS gene linkouts',
+            url:   url,
+            icon:  'fa-link'
+          }
+      else
+          url = "https://www.legumefederation.org/en/linkout_mgr/?seqname=" + id + "&start=" + coordinates[1][0].to_s() + "&end=" + coordinates[1][1].to_s()
+          {
+            order: 2,
+            title: 'LIS region linkouts',
+            url:   url,
+            icon:  'fa-link'
+          }
+      end
     end
 
-    def uniprot
-      return nil unless id.match(UNIPROT_ID_PATTERN) or title.match(UNIPROT_ID_PATTERN)
-      uniprot_id = Regexp.last_match[1]
-      uniprot_id = encode uniprot_id
-      url = "https://www.uniprot.org/uniprot/#{uniprot_id}"
-      {
-        order: 2,
-        title: 'UniProt',
-        url:   url,
-        icon:  'fa-external-link'
-      }
-    end
- 
-    def pfam
-      return nil unless id.match(PFAM_ID_PATTERN) or title.match(PFAM_ID_PATTERN)
-      pfam_id = Regexp.last_match[1]
-      pfam_id = encode pfam_id
-      url = "https://pfam.xfam.org/family/#{pfam_id}"
-      {
-        order: 2,
-        title: 'Pfam',
-        url:   url,
-        icon:  'fa-external-link'
-      }
-    end
+    def jbrowse
+      # Create the JBrowse link only for genomic regions, not genes
+      if id.match("gnm.*\.ann")
+        return
+      end
 
-    def rfam
-      return nil unless id.match(RFAM_ID_PATTERN) or title.match(RFAM_ID_PATTERN)
-      rfam_id = Regexp.last_match[1]
-      rfam_id = encode rfam_id
-      url = "https://rfam.xfam.org/family/#{rfam_id}"
+      # Prepare other fields besides sessionTracks
+      locStart = coordinates[1][0].to_s()
+      locEnd = coordinates[1][1].to_s()
+      assembly = id.match('^.+gnm\d+')[0]
+      tracks = 'sequenceserver_track'
+
+      # Prepare the sessionTracks field
+      sessionTracks = '[{"type":"FeatureTrack","trackId":"sequenceserver_track","name":"SequenceServer Hits","assemblyNames":["' + assembly + '"],"adapter":{"type":"FromConfigAdapter","features":['
+      hsps.each_with_index do |hsp, i|
+        if i > 0
+          sessionTracks << ','
+        end
+        uid = query.id + '-' + hsp.number.to_s()
+        sessionTracks << '{'
+          sessionTracks << '"uniqueId":"' + uid + '"'
+          sessionTracks << ',"refName":"' + id + '"'
+          sessionTracks << ',"start":' + hsp.sstart.to_s()
+          sessionTracks << ',"end":' + hsp.send.to_s()
+          sessionTracks << ',"name":"' + uid + '"'
+          sessionTracks << ',"assembly":"' + assembly + '"'
+          sessionTracks << ',"bit_score":' + hsp.bit_score.round(2).to_s()
+          sessionTracks << ',"score":' + hsp.score.to_s()
+          sessionTracks << ',"evalue":' + ("%#.2e" % hsp.evalue).to_s()
+          sessionTracks << ',"identity":"' + hsp.identity.to_s() + '/' + hsp.length.to_s()
+          sessionTracks << ' (' + (100.0*hsp.identity/hsp.length).round(1).to_s() + '%)"'
+          sessionTracks << ',"positives":"' + hsp.positives.to_s() + '/' + hsp.length.to_s()
+          sessionTracks << ' (' + (100.0*hsp.positives/hsp.length).round(1).to_s() + '%)"'
+          sessionTracks << ',"gaps":"' + hsp.gaps.to_s() + '/' + hsp.length.to_s()
+          sessionTracks << ' (' + (100.0*hsp.gaps/hsp.length).round(1).to_s() + '%)"'
+          sessionTracks << ',"hit_frame":' + hsp.sframe.to_s()
+        sessionTracks << '}'
+      end
+      sessionTracks << ']}}]'
+
+      # Assemble the JBrowse link URL from the fields above
+      url = 'https://dev.peanutbase.org/tools/jbrowse2/'
+      url << '?loc=' + id + ':' + locStart + '-' + locEnd
+      url << '&assembly=' + assembly
+      url << '&tracks=' + tracks
+      url << '&sessionTracks=' + sessionTracks
+
+      # Return the link object
       {
-        order: 2,
-        title: 'Rfam',
-        url:   url,
-        icon:  'fa-external-link'
+        order: 3,
+        title: 'JBrowse2',
+        url: url,
+        icon: 'fa-external-link'
       }
     end
   end
