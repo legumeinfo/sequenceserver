@@ -99,16 +99,29 @@ module SequenceServer
           sessionTracks << ','
         end
         uid = query.id + '-' + hsp.number.to_s()
+        # Ensure sstart < send
+        sstart = hsp.sstart
+        send = hsp.send
+        if sstart > send
+          tmp = send
+          send = sstart
+          sstart = tmp
+        end
+        # Put evalue in scientific notation only if nonzero (positive)
+        e = '0'
+        if hsp.evalue > 0
+          e = ("%#.2e" % hsp.evalue).to_s()
+        end
         sessionTracks << '{'
           sessionTracks << '"uniqueId":"' + uid + '"'
           sessionTracks << ',"refName":"' + id + '"'
-          sessionTracks << ',"start":' + hsp.sstart.to_s()
-          sessionTracks << ',"end":' + hsp.send.to_s()
+          sessionTracks << ',"start":' + sstart.to_s()
+          sessionTracks << ',"end":' + send.to_s()
           sessionTracks << ',"name":"' + uid + '"'
           sessionTracks << ',"assembly":"' + assembly + '"'
           sessionTracks << ',"bit_score":' + hsp.bit_score.round(2).to_s()
           sessionTracks << ',"score":' + hsp.score.to_s()
-          sessionTracks << ',"evalue":' + ("%#.2e" % hsp.evalue).to_s()
+          sessionTracks << ',"evalue":' + e
           sessionTracks << ',"identity":"' + hsp.identity.to_s() + '/' + hsp.length.to_s()
           sessionTracks << ' (' + (100.0*hsp.identity/hsp.length).round(1).to_s() + '%)"'
           sessionTracks << ',"positives":"' + hsp.positives.to_s() + '/' + hsp.length.to_s()
