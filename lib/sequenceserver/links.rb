@@ -99,11 +99,19 @@ module SequenceServer
           sessionTracks << ','
         end
         uid = query.id + '-' + hsp.number.to_s()
+        # Ensure sstart < send
+        sstart = hsp.sstart
+        send = hsp.send
+        if sstart > send
+          tmp = send
+          send = sstart
+          sstart = tmp
+        end
         sessionTracks << '{'
           sessionTracks << '"uniqueId":"' + uid + '"'
           sessionTracks << ',"refName":"' + id + '"'
-          sessionTracks << ',"start":' + hsp.sstart.to_s()
-          sessionTracks << ',"end":' + hsp.send.to_s()
+          sessionTracks << ',"start":' + sstart.to_s()
+          sessionTracks << ',"end":' + send.to_s()
           sessionTracks << ',"name":"' + uid + '"'
           sessionTracks << ',"assembly":"' + assembly + '"'
           sessionTracks << ',"bit_score":' + hsp.bit_score.round(2).to_s()
