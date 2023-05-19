@@ -6,7 +6,12 @@ services:
     build: .
     volumes_from: ["db"]
     restart: always
+    init: true
+    # sequenceserver leaks some memory with each query, and has observed to emit the error
+    #     `fork': Cannot allocate memory - fork(2) (Errno::ENOMEM)
+    # when process memory is > ~5 GB. This healthcheck (combined with restart policy & init)
+    # effectively restarts the container when sequenceserver RSS exceeds 4 GB.
     healthcheck:
-      test: curl -qo /dev/null http://localhost:4567/searchdata.json
+      test: ["CMD-SHELL", "{ curl -qo /dev/null http://localhost:4567/searchdata.json || exit 1; } && [ $$(ps -p $$(pgrep --parent 1 --ful sequenceserver) -o rss=) -lt 4000000 ] || kill 1"]
     ports:
       - "4567:4567"

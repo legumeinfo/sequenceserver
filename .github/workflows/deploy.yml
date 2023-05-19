@@ -1,7 +1,7 @@
 on:
   push:
-    tags:
-      - '**'
+    branch: ['lis']
+  workflow_dispatch:
 
 jobs:
   build-and-deploy:
