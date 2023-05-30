@@ -9,17 +9,17 @@ dnf install:
 - gcc
 
 using mines-reverted branch of legumeinfo/sequenceserver:
-
+```
 $ gem install bundler
 $ cd sequenceserver
 $ bundle config path 'vendor/bundle' --local
 $ bundle install
 $ bundle exec bin/sequenceserver
-
+```
 - let it install BLAST
 - tell it data is /home/shokin/data
 
-/etc/systemd/system/sequenceserver.service
+/etc/systemd/system/sequenceserver.service:
 ```
 [Unit]
 Description=SequenceServer as a service
@@ -38,5 +38,7 @@ ExecStart=/home/shokin/bin/bundle exec bin/sequenceserver
 WantedBy=multi-user.target
 ```
 
+```
 $ systemctl daemon-reload
 $ systemctl start sequenceserver
+```
