@@ -1,0 +1,15 @@
+FROM ncbi/blast:2.12.0
+
+WORKDIR "/db/Phaseolus_lunatus_Genomic_Sequence_Collection"
+RUN bash -c 'set -o pipefail -o errexit -o nounset; curl https://data.legumeinfo.org/Phaseolus/lunatus/genomes/G27455.gnm1.7NXX/phalu.G27455.gnm1.7NXX.genome_main.fna.gz | gzip -dc| makeblastdb -parse_seqids -out ./phalu.G27455.gnm1 -hash_index -dbtype nucl -title "Phaseolus lunatus G27455 V1 Genomes" -taxid 3884'
+WORKDIR "/db/Phaseolus_vulgaris_Genomic_Sequence_Collection"
+RUN bash -c 'set -o pipefail -o errexit -o nounset; curl https://data.legumeinfo.org/Phaseolus/vulgaris/genomes/5-593.gnm1.1P7P/phavu.5-593.gnm1.1P7P.genome_main.fna.gz | gzip -dc| makeblastdb -parse_seqids -out ./phavu.5-593.gnm1 -hash_index -dbtype nucl -title "Phaseolus vulgaris 5-593 V1 Genomes" -taxid 3885'
+RUN bash -c 'set -o pipefail -o errexit -o nounset; curl https://data.legumeinfo.org/Phaseolus/vulgaris/genomes/G19833.gnm1.zBnF/phavu.G19833.gnm1.zBnF.genome_main.fna.gz | gzip -dc| makeblastdb -parse_seqids -out ./phavu.G19833.gnm1 -hash_index -dbtype nucl -title "Phaseolus vulgaris G19833 V1 Genomes" -taxid 3885'
+RUN bash -c 'set -o pipefail -o errexit -o nounset; curl https://data.legumeinfo.org/Phaseolus/vulgaris/genomes/G19833.gnm2.fC0g/phavu.G19833.gnm2.fC0g.genome_main.fna.gz | gzip -dc| makeblastdb -parse_seqids -out ./phavu.G19833.gnm2 -hash_index -dbtype nucl -title "Phaseolus vulgaris G19833 V2 Genomes" -taxid 3885'
+RUN bash -c 'set -o pipefail -o errexit -o nounset; curl https://data.legumeinfo.org/Phaseolus/vulgaris/genomes/LaborOvalle.gnm1.VZZS/phavu.LaborOvalle.gnm1.VZZS.genome_main.fna.gz | gzip -dc| makeblastdb -parse_seqids -out ./phavu.LaborOvalle.gnm1 -hash_index -dbtype nucl -title "Phaseolus vulgaris LaborOvalle V1 Genomes" -taxid 3885'
+RUN bash -c 'set -o pipefail -o errexit -o nounset; curl https://data.legumeinfo.org/Phaseolus/vulgaris/genomes/OACRex.gnm2.NXJW/phavu.OACRex.gnm2.NXJW.genome_main.fna.gz | gzip -dc| makeblastdb -parse_seqids -out ./phavu.OACRex.gnm2 -hash_index -dbtype nucl -title "Phaseolus vulgaris OACRex V2 Genomes" -taxid 3885'
+RUN bash -c 'set -o pipefail -o errexit -o nounset; curl https://data.legumeinfo.org/Phaseolus/vulgaris/genomes/UI111.gnm1.3VTM/phavu.UI111.gnm1.3VTM.genome_main.fna.gz | gzip -dc| makeblastdb -parse_seqids -out ./phavu.UI111.gnm1 -hash_index -dbtype nucl -title "Phaseolus vulgaris UI111 V1 Genomes" -taxid 3885'
+WORKDIR "/db/Phaseolus_acutifolius_Genomic_Sequence_Collection"
+RUN bash -c 'set -o pipefail -o errexit -o nounset; curl https://data.legumeinfo.org/Phaseolus/acutifolius/genomes/Frijol_Bayo.gnm1.QH8L/phaac.Frijol_Bayo.gnm1.QH8L.genome_main.fna.gz | gzip -dc| makeblastdb -parse_seqids -out ./phaac.Frijol_Bayo.gnm1 -hash_index -dbtype nucl -title "Phaseolus acutifolius Frijol_Bayo V1 Genomes" -taxid 33129'
+RUN bash -c 'set -o pipefail -o errexit -o nounset; curl https://data.legumeinfo.org/Phaseolus/acutifolius/genomes/W6_15578.gnm2.L2V4/phaac.W6_15578.gnm2.L2V4.genome_main.fna.gz | gzip -dc| makeblastdb -parse_seqids -out ./phaac.W6_15578.gnm2 -hash_index -dbtype nucl -title "Phaseolus acutifolius W6_15578 V2 Genomes" -taxid 33129'
+VOLUME ["/db"]

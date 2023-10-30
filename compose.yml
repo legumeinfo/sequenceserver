@@ -1,0 +1,12 @@
+services:
+  db:
+    build: db
+
+  sequenceserver:
+    build: .
+    volumes_from: ["db"]
+    restart: always
+      #healthcheck:
+      #test: curl -qo /dev/null http://localhost:4567/searchdata.json
+    ports:
+      - "${REVERSE_PROXY_PORT}:4567"
