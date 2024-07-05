@@ -1,10 +1,11 @@
-import React, { Component } from 'react';
+import React, { Component, createRef } from 'react';
 import { SearchButton } from './search_button';
 import { SearchQueryWidget } from './query';
 import DatabasesTree from './databases_tree';
 import { Databases } from './databases';
 import _ from 'underscore';
-import { Options } from './options';
+import { Options } from 'options';
+import QueryStats from 'query_stats';
 
 /**
  * Search form.
@@ -16,18 +17,28 @@ export class Form extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            databases: [], preDefinedOpts: {}, tree: {}
+            databases: [],
+            preSelectedDbs: [],
+            currentlySelectedDbs: [],
+            preDefinedOpts: {},
+            tree: {},
+            residuesInQuerySequence: 0,
+            blastMethod: ''
         };
         this.useTreeWidget = this.useTreeWidget.bind(this);
-        this.determineBlastMethod = this.determineBlastMethod.bind(this);
+        this.determineBlastMethods = this.determineBlastMethods.bind(this);
         this.handleSequenceTypeChanged = this.handleSequenceTypeChanged.bind(this);
-        this.handleDatabaseTypeChanaged = this.handleDatabaseTypeChanaged.bind(this);
-        this.handleNewTabCheckbox = this.handleNewTabCheckbox.bind(this);
+        this.handleSequenceChanged = this.handleSequenceChanged.bind(this);
+        this.handleDatabaseTypeChanged = this.handleDatabaseTypeChanged.bind(this);
+        this.handleDatabaseSelectionChanged = this.handleDatabaseSelectionChanged.bind(this);
         this.handleAlgoChanged = this.handleAlgoChanged.bind(this);
+        this.handleFormSubmission = this.handleFormSubmission.bind(this);
+        this.formRef = createRef();
+        this.setButtonState = this.setButtonState.bind(this);
     }
 
     componentDidMount() {
-        /** 
+        /**
         * Fetch data to initialise the search interface from the server. These
         * include list of databases to search against, advanced options to
         * apply when an algorithm is selected, and a query sequence that
@@ -46,7 +57,8 @@ export class Form extends Component {
                 tree: data['tree'],
                 databases: data['database'],
                 preSelectedDbs: data['preSelectedDbs'],
-                preDefinedOpts: data['options']
+                preDefinedOpts: data['options'],
+                blastTaskMap: data['blastTaskMap']
             });
 
             /* Pre-populate the form with server sent query sequences
@@ -70,7 +82,7 @@ export class Form extends Component {
             }
         });
 
-        // show overlay to create visual feedback on button click 
+        // show overlay to create visual feedback on button click
         $('#method').on('click', () => {
             $('#overlay').css('display', 'block');
         });
@@ -80,7 +92,29 @@ export class Form extends Component {
         return !_.isEmpty(this.state.tree);
     }
 
-    determineBlastMethod() {
+    handleFormSubmission(evt) {
+        evt.preventDefault();
+        const form = this.formRef.current;
+        const formData = new FormData(form);
+        formData.append('method', this.refs.button.state.methods[0]);
+        fetch(window.location.href, {
+            method: 'POST',
+            body: formData
+        }).then(res => {
+            //remove overlay when form is submitted
+            $('#overlay').css('display', 'none');
+            // redirect
+            if (res.redirected && res.url) {
+                // setTimeout is needed here as a workaround because safari doesnt allow async calling of window.open
+                // so setTimeout makes the method get called on the main thread.
+                setTimeout(() => {
+                    window.open(res.url, $('#toggleNewTab').is(':checked') ? '_blank' : '_self');
+                }, 0);
+            }
+        });
+    }
+
+    determineBlastMethods() {
         var database_type = this.databaseType;
         var sequence_type = this.sequenceType;
 
@@ -115,84 +149,94 @@ export class Form extends Component {
         return [];
     }
 
+    handleSequenceChanged(residuesInQuerySequence) {
+        if(residuesInQuerySequence !== this.state.residuesInQuerySequence)
+            this.setState({ residuesInQuerySequence: residuesInQuerySequence});
+    }
+
     handleSequenceTypeChanged(type) {
         this.sequenceType = type;
+        this.setButtonState();
+    }
+
+    handleDatabaseTypeChanged(type) {
+        this.databaseType = type;
+        this.setButtonState();
+    }
+
+    setButtonState() {
         this.refs.button.setState({
             hasQuery: !this.refs.query.isEmpty(),
             hasDatabases: !!this.databaseType,
-            methods: this.determineBlastMethod()
+            methods: this.determineBlastMethods()
         });
     }
 
-    handleDatabaseTypeChanaged(type) {
-        this.databaseType = type;
-        this.refs.button.setState({
-            hasQuery: !this.refs.query.isEmpty(),
-            hasDatabases: !!this.databaseType,
-            methods: this.determineBlastMethod()
-        });
+    handleDatabaseSelectionChanged(selectedDbs) {
+        if (!_.isEqual(selectedDbs, this.state.currentlySelectedDbs))
+            this.setState({ currentlySelectedDbs: selectedDbs });
     }
 
     handleAlgoChanged(algo) {
-        if (this.state.preDefinedOpts.hasOwnProperty(algo)) {
-            var preDefinedOpts = this.state.preDefinedOpts[algo];
-            this.refs.opts.setState({
-                preOpts: preDefinedOpts,
-                value: (preDefinedOpts['last search'] ||
-                    preDefinedOpts['default']).join(' ')
-            });
+        if (algo in this.state.preDefinedOpts) {
+            this.setState({ blastMethod: algo });
         }
         else {
-            this.refs.opts.setState({ preOpts: {}, value: '' });
+            this.setState({ blastMethod: ''});
         }
     }
 
-    handleNewTabCheckbox() {
-        setTimeout(() => {
-            if ($('#toggleNewTab').is(':checked')) {
-                $('#blast').attr('target', '_blank');
-            }
-            else {
-                $('#blast').attr('target', '_self');
-            }
-        });
+    residuesInSelectedDbs() {
+        return this.state.currentlySelectedDbs.reduce((sum, db) => sum + parseInt(db.ncharacters, 10), 0);
     }
+
     render() {
         return (
-            <div className="container">
+            <div>
                 <div id="overlay" style={{ position: 'absolute', top: 0, left: 0, width: '100vw', height: '100vw', background: 'rgba(0, 0, 0, 0.2)', display: 'none', zIndex: 99 }} />
-                <form id="blast" method="post" className="form-horizontal">
-                    <div className="form-group query-container">
-                        <SearchQueryWidget ref="query" onSequenceTypeChanged={this.handleSequenceTypeChanged} />
+
+                <div className="fixed top-0 left-0 w-full max-h-8 px-8" data-notifications id="notifications">
+                    <FastqNotification />
+                    <NucleotideNotification />
+                    <ProteinNotification />
+                    <MixedNotification />
+                </div>
+
+                <form id="blast" ref={this.formRef} onSubmit={this.handleFormSubmission}>
+                    <input type="hidden" name="_csrf" value={document.querySelector('meta[name="_csrf"]').content} />
+                    <div className="px-4">
+                        <SearchQueryWidget ref="query" onSequenceTypeChanged={this.handleSequenceTypeChanged} onSequenceChanged={this.handleSequenceChanged}/>
+
+                        {this.useTreeWidget() ?
+                            <DatabasesTree ref="databases"
+                                databases={this.state.databases} tree={this.state.tree}
+                                preSelectedDbs={this.state.preSelectedDbs}
+                                onDatabaseTypeChanged={this.handleDatabaseTypeChanged}
+                                onDatabaseSelectionChanged={this.handleDatabaseSelectionChanged} />
+                            :
+                            <Databases ref="databases" databases={this.state.databases}
+                                preSelectedDbs={this.state.preSelectedDbs}
+                                onDatabaseTypeChanged={this.handleDatabaseTypeChanged}
+                                onDatabaseSelectionChanged={this.handleDatabaseSelectionChanged} />
+                        }
+
+                        <Options blastMethod={this.state.blastMethod} predefinedOptions={this.state.preDefinedOpts[this.state.blastMethod] || {}} blastTasks={(this.state.blastTaskMap || {})[this.state.blastMethod]} />
                     </div>
-                    <div className="notifications" id="notifications">
-                        <NucleotideNotification />
-                        <ProteinNotification />
-                        <MixedNotification />
-                    </div>
-                    {this.useTreeWidget() ?
-                        <DatabasesTree ref="databases"
-                            databases={this.state.databases} tree={this.state.tree}
-                            preSelectedDbs={this.state.preSelectedDbs}
-                            onDatabaseTypeChanged={this.handleDatabaseTypeChanaged} />
-                        :
-                        <Databases ref="databases" databases={this.state.databases}
-                            preSelectedDbs={this.state.preSelectedDbs}
-                            onDatabaseTypeChanged={this.handleDatabaseTypeChanaged} />
-                    }
-                    <div className="form-group">
-                        <Options ref="opts" />
-                        <div className="col-md-2">
-                            <div className="form-group" style={{ 'textAlign': 'center', 'padding': '7px 0' }}>
-                                <label>
-                                    <input type="checkbox" id="toggleNewTab"
-                                        onChange={() => { this.handleNewTabCheckbox(); }}
-                                    /> Open results in new tab
-                                </label>
-                            </div>
-                        </div>
+
+                    <div className="py-6"></div> {/* add a spacer so that the sticky action bar does not hide any contents */}
+
+                    <div className="pb-4 pt-2 px-4 sticky bottom-0 md:flex flex-row md:space-x-4 items-center justify-end bg-gradient-to-t to-gray-100/90 from-white/90">
+                        <QueryStats
+                            residuesInQuerySequence={this.state.residuesInQuerySequence} numberOfDatabasesSelected={this.state.currentlySelectedDbs.length} residuesInSelectedDbs={this.residuesInSelectedDbs()}
+                            currentBlastMethod={this.state.blastMethod}
+                        />
+
+                        <label className="block my-4 md:my-2">
+                            <input type="checkbox" id="toggleNewTab" /> Open results in new tab
+                        </label>
                         <SearchButton ref="button" onAlgoChanged={this.handleAlgoChanged} />
                     </div>
+
                 </form>
             </div>
         );
@@ -205,11 +249,11 @@ class ProteinNotification extends Component {
     render() {
         return (
             <div
-                className="notification row"
+                data-role="notification"
                 id="protein-sequence-notification"
                 style={{ display: 'none' }}>
                 <div
-                    className="alert-info col-md-6 col-md-offset-3">
+                    className="bg-blue-100 border rounded border-blue-800 px-4 py-2 my-2">
                     Detected: amino-acid sequence(s).
                 </div>
             </div>
@@ -220,12 +264,27 @@ class ProteinNotification extends Component {
 class NucleotideNotification extends Component {
     render() {
         return (<div
-            className="notification row"
+            data-role="notification"
             id="nucleotide-sequence-notification"
             style={{ display: 'none' }}>
             <div
-                className="alert-info col-md-6 col-md-offset-3">
+                className="bg-blue-100 border rounded border-blue-800 px-4 py-2 my-2">
                 Detected: nucleotide sequence(s).
+            </div>
+        </div>
+        );
+    }
+}
+
+class FastqNotification extends Component {
+    render() {
+        return (<div
+            data-role="notification"
+            id="fastq-sequence-notification"
+            style={{ display: 'none' }}>
+            <div
+                className="bg-blue-100 border rounded border-blue-800 px-4 py-2 my-2">
+                Detected FASTQ and automatically converted to FASTA.
             </div>
         </div>
         );
@@ -236,7 +295,7 @@ class MixedNotification extends Component {
     render() {
         return (
             <div
-                className="notification row"
+                data-role="notification"
                 id="mixed-sequence-notification"
                 style={{ display: 'none' }}>
                 <div

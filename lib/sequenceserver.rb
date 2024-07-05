@@ -2,10 +2,13 @@ require 'English'
 require 'socket'
 require 'resolv'
 
+Encoding.default_external = 'UTF-8'
+Encoding.default_internal = 'UTF-8'
+
 # Top level module / namespace.
 module SequenceServer
   # The default version of BLAST that will be downloaded and configured for use.
-  BLAST_VERSION = '2.12.0+'.freeze
+  BLAST_VERSION = '2.14.1+'.freeze
 
   # Default location of configuration file.
   DEFAULT_CONFIG_FILE = '~/.sequenceserver.conf'.freeze
@@ -62,6 +65,9 @@ module SequenceServer
 
     # SequenceServer initialisation routine.
     def init(config = {})
+      # Reset makeblastdb cache, because configuration may have changed.
+      @makeblastdb = nil
+
       # Use default config file if caller didn't specify one.
       config[:config_file] ||= DEFAULT_CONFIG_FILE
 
@@ -201,10 +207,13 @@ module SequenceServer
 
       logger.debug("Will look for BLAST+ databases in: #{config[:database_dir]}")
 
-      makeblastdb.scan
-      fail NO_BLAST_DATABASE_FOUND, config[:database_dir] if !makeblastdb.any_formatted?
+      fail NO_BLAST_DATABASE_FOUND, config[:database_dir] unless makeblastdb.any_formatted?
 
       Database.collection = makeblastdb.formatted_fastas
+      check_database_compatibility unless config[:optimistic].to_s == 'true'
+    end
+
+    def check_database_compatibility
       Database.each do |database|
         logger.debug "Found #{database.type} database '#{database.title}' at '#{database.path}'"
         if database.non_parse_seqids?

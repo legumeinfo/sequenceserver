@@ -136,6 +136,7 @@ module SequenceServer
         # Returns a file name to use for the temporary file.
         def filename
           return @filename if @filename
+
           name = sequence_ids.first            if sequence_ids.length == 1
           name = "#{sequence_ids.length}_hits" if sequence_ids.length >= 2
           @filename = "sequenceserver-#{name}.fa"
@@ -179,17 +180,15 @@ module SequenceServer
         @database_ids = Array database_ids
         @in_file = in_file
 
-        validate && run
+        validate && create_entry_batch_file && run
       end
 
-      attr_reader :sequence_ids, :database_ids, :in_file
+      attr_reader :sequence_ids, :database_ids, :in_file, :sequences
 
-      attr_reader :sequences
-
-      def to_json
+      def to_json(*_args)
         {
           error_msgs: error_msgs,
-          sequences:  sequences.map(&:info)
+          sequences: sequences.map(&:info)
         }.to_json
       end
 
@@ -198,10 +197,9 @@ module SequenceServer
       def run
         command = "blastdbcmd -outfmt '%g	%i	%a	%t	%s'" \
                   " -db '#{database_names.join(' ')}'" \
-                  " -entry '#{sequence_ids.join(',')}'"
+                  " -entry_batch '#{@batch_file.path}'"
 
         out, = sys(command, path: config[:bin])
-
         @sequences = out.each_line.map do |line|
           # Stop codons in amino acid sequence databases show up as invalid
           # UTF-8 characters in the output and cause the subsequent call to
@@ -209,6 +207,8 @@ module SequenceServer
           line = line.encode('UTF-8', invalid: :replace, replace: 'X')
           Sequence.new(*line.chomp.split('	'))
         end
+
+        @batch_file.unlink
         extend(IO) && write if in_file
       end
 
@@ -222,15 +222,44 @@ module SequenceServer
 
       def validate
         ids = Database.ids
-        return true if database_ids.is_a?(Array) && !database_ids.empty? &&
-                       (ids & database_ids).length == database_ids.length
-        fail ArgumentError, 'Database id should be one of:' \
-                            " #{ids.join("\n")}."
+        unless database_ids.is_a?(Array) &&
+               !database_ids.empty? &&
+               (ids & database_ids).length == database_ids.length
+
+          fail(
+            DatabaseUnreachableError,
+            "Database id should be one of: #{ids.join("\n")}"
+          )
+        end
+
+        valid_id_regex = /\A[a-zA-Z0-9-_.:*#|\[\]]+\z/
+        invalid_sequence_ids = sequence_ids.reject do |id|
+          id =~ valid_id_regex
+        end
+
+        unless invalid_sequence_ids.empty?
+          fail(
+            InvalidSequenceIdError,
+            "Invalid sequence id(s): #{invalid_sequence_ids.join(', ')}"
+          )
+        end
+
+        true
+      end
+
+      ##
+      # Create a temporary file containing sequence ids to fetch.
+      def create_entry_batch_file
+        @batch_file = Tempfile.new("#{Time.now}_batch").tap do |f|
+          f.write(sequence_ids.join("\n"))
+          f.flush
+        end
       end
 
       # rubocop:disable Metrics/MethodLength
       def error_msgs
         return [] if sequences.length == sequence_ids.length
+
         [
           ['ERROR: incorrect number of sequences found.',
            <<~MSG

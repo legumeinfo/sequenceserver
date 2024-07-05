@@ -1,4 +1,4 @@
-FROM ncbi/blast:2.12.0
+FROM ncbi/blast-static:2.14.1
 
 WORKDIR /db
 VOLUME ["/db"]
@@ -14,7 +14,7 @@ RUN mkblastdb Arachis/duranensis/genomes/V14167.gnm2.J7QH/aradu.V14167.gnm2.J7QH
 RUN mkblastdb Arachis/hypogaea/genomes/Tifrunner.gnm2.J5K5/arahy.Tifrunner.gnm2.J5K5.genome_main.fna.gz nucl 3818 'Arachis hypogaea Tifrunner v2 genome'
 RUN mkblastdb Arachis/ipaensis/genomes/K30076.gnm2.1GWY/araip.K30076.gnm2.1GWY.genome_main.fna.gz nucl 130454 'Arachis ipaensis K30076 v2 genome'
 RUN mkblastdb Cajanus/cajan/genomes/ICPL87119.gnm2.KL9M/cajca.ICPL87119.gnm2.KL9M.genome_main.fna.gz nucl 3821 'Cajanus cajan ICPL87119 v2 genome'
-RUN mkblastdb Cercis/canadensis/genomes/ISC453364.gnm1.B05Z/cerca.ISC453364.gnm1.B05Z.genome_main.fna.gz nucl 49801 'Cercis canadensis ISC453364 v1 genome'
+RUN mkblastdb Cercis/canadensis/genomes/ISC453364.gnm3.GWXB/cerca.ISC453364.gnm3.GWXB.genome_main.fna.gz nucl 49801 'Cercis canadensis ISC453364 v3 genome'
 RUN mkblastdb Chamaecrista/fasciculata/genomes/MN87.gnm1.JXFN/chafa.MN87.gnm1.JXFN.genome_main.fna.gz nucl 53854 'Chamaecrista fasciculata MN87 v1 genome'
 RUN mkblastdb Cicer/arietinum/genomes/CDCFrontier.gnm1.GkHc/cicar.CDCFrontier.gnm1.GkHc.genome_main.fna.gz nucl 3827 'Cicer arietinum CDCFrontier v1 genome'
 RUN mkblastdb Faidherbia/albida/genomes/WAFC.gnm1.ZT1R/faial.WAFC.gnm1.ZT1R.genome_main.fna.gz nucl 138055 'Faidherbia albida WAFC v1 genome'
@@ -47,7 +47,7 @@ RUN mkblastdb Arachis/duranensis/annotations/V14167.gnm1.ann1.cxSM/aradu.V14167.
 RUN mkblastdb Arachis/hypogaea/annotations/Tifrunner.gnm2.ann1.4K0L/arahy.Tifrunner.gnm2.ann1.4K0L.mrna_primary.fna.gz nucl 3818 'Arachis hypogaea Tifrunner v2.1 mRNAs'
 RUN mkblastdb Arachis/ipaensis/annotations/K30076.gnm1.ann1.J37m/araip.K30076.gnm1.ann1.J37m.mrna.fna.gz nucl 130454 'Arachis ipaensis K30076 v1.1 mRNAs'
 RUN mkblastdb Cajanus/cajan/annotations/ICPL87119.gnm2.ann1.L3ZH/cajca.ICPL87119.gnm2.ann1.L3ZH.mrna_primary.fna.gz nucl 3821 'Cajanus cajan ICPL87119 v2.1 mRNAs'
-RUN mkblastdb Cercis/canadensis/annotations/ISC453364.gnm1.ann1.HZJM/cerca.ISC453364.gnm1.ann1.HZJM.mrna.fna.gz nucl 49801 'Cercis canadensis ISC453364 v1.1 mRNAs'
+RUN mkblastdb Cercis/canadensis/annotations/ISC453364.gnm3.ann1.3N1M/cerca.ISC453364.gnm3.ann1.3N1M.mrna.fna.gz nucl 49801 'Cercis canadensis ISC453364 v3.1 mRNAs'
 RUN mkblastdb Chamaecrista/fasciculata/annotations/MN87.gnm1.ann1.LWFM/chafa.MN87.gnm1.ann1.LWFM.mrna.fna.gz nucl 53854 'Chamaecrista fasciculata MN87 v1.1 pmRNAs'
 RUN mkblastdb Cicer/arietinum/annotations/CDCFrontier.gnm1.ann1.nRhs/cicar.CDCFrontier.gnm1.ann1.nRhs.mrna.fna.gz nucl 3827 'Cicer arietinum CDCFrontier v1.1 mRNAs'
 RUN mkblastdb Faidherbia/albida/annotations/WAFC.gnm1.ann1.RTP9/faial.WAFC.gnm1.ann1.RTP9.mrna.fna.gz nucl 138055 'Faidherbia albida WAFC v1.1 mRNAs'
@@ -81,7 +81,7 @@ RUN mkblastdb Arachis/duranensis/annotations/V14167.gnm1.ann1.cxSM/aradu.V14167.
 RUN mkblastdb Arachis/hypogaea/annotations/Tifrunner.gnm2.ann1.4K0L/arahy.Tifrunner.gnm2.ann1.4K0L.protein_primary.faa.gz prot 3818 'Arachis hypogaea Tifrunner v2.1 proteins'
 RUN mkblastdb Arachis/ipaensis/annotations/K30076.gnm1.ann1.J37m/araip.K30076.gnm1.ann1.J37m.protein.faa.gz prot 130454 'Arachis ipaensis K30076 v1.1 proteins'
 RUN mkblastdb Cajanus/cajan/annotations/ICPL87119.gnm2.ann1.L3ZH/cajca.ICPL87119.gnm2.ann1.L3ZH.protein_primary.faa.gz prot 3821 'Cajanus cajan ICPL87119 v2.1 proteins'
-RUN mkblastdb Cercis/canadensis/annotations/ISC453364.gnm1.ann1.HZJM/cerca.ISC453364.gnm1.ann1.HZJM.protein.faa.gz prot 49801 'Cercis canadensis ISC453364 v1.1 proteins'
+RUN mkblastdb Cercis/canadensis/annotations/ISC453364.gnm3.ann1.3N1M/cerca.ISC453364.gnm3.ann1.3N1M.mrna.fna.gz prot 49801 'Cercis canadensis ISC453364 v3.1 proteins'
 RUN mkblastdb Chamaecrista/fasciculata/annotations/MN87.gnm1.ann1.LWFM/chafa.MN87.gnm1.ann1.LWFM.protein.faa.gz prot 53854 'Chamaecrista fasciculata MN87 v1.1 pproteins'
 RUN mkblastdb Cicer/arietinum/annotations/CDCFrontier.gnm1.ann1.nRhs/cicar.CDCFrontier.gnm1.ann1.nRhs.protein.faa.gz prot 3827 'Cicer arietinum CDCFrontier v1.1 proteins'
 RUN mkblastdb Faidherbia/albida/annotations/WAFC.gnm1.ann1.RTP9/faial.WAFC.gnm1.ann1.RTP9.protein.faa.gz prot 138055 'Faidherbia albida WAFC v1.1 proteins'
