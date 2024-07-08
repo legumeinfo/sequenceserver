@@ -1,4 +1,4 @@
-require 'rack/handler/webrick'
+require 'rackup/handler/webrick'
 
 module SequenceServer
   # Simple wrapper around WEBrick and Rack::Handler::WEBrick to host
@@ -22,7 +22,7 @@ module SequenceServer
     def start
       setup_signal_handlers
       @server = WEBrick::HTTPServer.new(options)
-      @server.mount '/', Rack::Handler::WEBrick, app
+      @server.mount '/', Rackup::Handler::WEBrick, app
       @server.start
     end
 
