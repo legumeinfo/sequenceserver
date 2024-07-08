@@ -11,12 +11,19 @@ module SequenceServer
 
     def initialize(data = {})
       @data = normalize data
+
       @config_file = @data.delete(:config_file)
       if @config_file
         @config_file = File.expand_path(@config_file)
-        @data = parse_config_file.update @data
+        @data = parse_config_file.deep_merge @data
       end
-      @data = defaults.update @data
+
+      @data = defaults.deep_merge @data
+
+      return unless @upgraded
+
+      logger.warn 'You are using old configuration syntax. ' \
+                  'Run `sequenceserver -s` to update your config file syntax.'
     end
 
     attr_reader :data, :config_file
@@ -39,6 +46,7 @@ module SequenceServer
     # Write config data to config file.
     def write_config_file
       return unless config_file
+
       File.open(config_file, 'w') do |f|
         f.puts(data.delete_if { |_, v| v.nil? }.to_yaml)
       end
@@ -46,33 +54,22 @@ module SequenceServer
 
     private
 
-    # Symbolizes keys. Changes `database` key to `database_dir`.
+    # Symbolizes keys. Rename/reformat key-values.
     def normalize(data)
       return {} unless data
 
       # Symbolize keys.
-      data = Hash[data.map { |k, v| [k.to_sym, v] }]
+      data = data.transform_keys(&:to_sym)
 
-      # The newer config file version replaces the older database key with
-      # database_dir for correctness. Let's honour the old version as well.
+      # Very old config files may have a key called `database`.
+      # Rename it to `database_dir`
       if data[:database]
         database_dir = data.delete(:database)
         data[:database_dir] ||= database_dir
+        @upgrade = true
       end
 
-      # We would like a persistent :options: key in the config file, explicitly
-      # stating the parameters to use. Recommended values are written to config
-      # file on the first run. However, existing users won't have :options: key
-      # available from before. For them, we retain the old behaviour of
-      # automatically adding `-task blastn` for BLASTN searches.
-      if blast_opts = data.dig(:options, :blastn)
-        unless blast_opts.join.match('-task')
-          # Issue a warning.
-          logger.info "BLASTN will be run using '-task blastn' option." +
-                      " You can override this through configuration file."
-          data[:options][:blastn].push '-task blastn'
-        end
-      end
+      data[:options] = convert_deprecated_options(data[:options]) if data[:options]
 
       data
     end
@@ -86,8 +83,8 @@ module SequenceServer
       end
       logger.info "Reading configuration file: #{config_file}."
       normalize YAML.load_file(config_file)
-    rescue => error
-      raise CONFIG_FILE_ERROR.new(config_file, error)
+    rescue StandardError => e
+      raise CONFIG_FILE_ERROR.new(config_file, e)
     end
 
     def file?(file)
@@ -96,21 +93,83 @@ module SequenceServer
 
     # Default configuration data.
     def defaults
-      {
+      @defaults ||= {
         host: '0.0.0.0',
         port: 4567,
         databases_widget: 'classic',
         options: {
-          blastn:  ['-task blastn', '-evalue 1e-5'],
-          blastp:  ['-evalue 1e-5'],
-          blastx:  ['-evalue 1e-5'],
-          tblastx: ['-evalue 1e-5'],
-          tblastn: ['-evalue 1e-5']
+          blastn: {
+            default: {
+              description: nil,
+              attributes: ['-task blastn', '-evalue 1e-5']
+            }
+          },
+          blastp: {
+            default: {
+              description: nil,
+              attributes: ['-evalue 1e-5']
+            }
+          },
+          blastx: {
+            default: {
+              description: nil,
+              attributes: ['-evalue 1e-5']
+            }
+          },
+          tblastx: {
+            default: {
+              description: nil,
+              attributes: ['-evalue 1e-5']
+            }
+          },
+          tblastn: {
+            default: {
+              description: nil,
+              attributes: ['-evalue 1e-5']
+            }
+          }
         },
         num_threads: 1,
         num_jobs: 1,
-        job_lifetime: 43200
+        job_lifetime: 43_200,
+        # Set cloud_share_url to 'disabled' to disable the cloud sharing feature
+        cloud_share_url: 'https://share.sequenceserver.com/api/v1/shared-job',
+        # Warn in the UI before rendering results larger than this value
+        large_result_warning_threshold: 250 * 1024 * 1024,
+        optimistic: false # Faster, but does not perform DB compatibility checks
       }
+    end
+
+    def convert_deprecated_options(options)
+      options.each do |blast_algo, algo_config|
+        if algo_config.is_a?(Array)
+          # Very old config files may have a single array with CLI args.
+          # e.g. { blastn: ['-task blastn', '-evalue 1e-5'] }
+          # Convert the array values into a single hash naming it 'default' if
+          # the values match SequenceServer defaults.
+          options[blast_algo] = if algo_config == defaults.dig(:options, blast_algo, :default, :attributes)
+                                  { default: { attributes: algo_config } }
+                                else
+                                  { custom: { attributes: algo_config } }
+                                end
+          @upgraded = true
+        elsif algo_config.is_a?(Hash)
+          # v3.0.1 and older config files contain a flatter structure
+          # with an array instead of 'description' and 'attributes' keys.
+          # e.g. { blastn: { default: ['-task blastn', '-evalue 1e-5'] }
+          algo_config.each do |config_name, config|
+            next unless config.is_a?(Array)
+
+            options[blast_algo][config_name] = {
+              description: nil,
+              attributes: config
+            }
+            @upgraded = true
+          end
+        end
+      end
+
+      options
     end
   end
 end

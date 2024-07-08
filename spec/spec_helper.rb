@@ -1,9 +1,9 @@
 require 'simplecov'
 require 'capybara/rspec'
-require 'capybara-screenshot/rspec'
 require 'selenium-webdriver'
+require 'capybara-screenshot/rspec'
 
-require_relative 'download_helper'
+Dir[File.expand_path('spec/support/**/*.rb')].sort.each { |file| require file }
 
 # Start SimpleCov.
 SimpleCov.start
@@ -15,10 +15,41 @@ require 'sequenceserver'
 # For the purpose of testing, set DOTDIR to spec/dotdir.
 SequenceServer::DOTDIR = File.join(__dir__, 'dotdir')
 
+Capybara.app = SequenceServer
+Capybara.server = :webrick
+Capybara.default_max_wait_time = 10
+
+chrome_options = Selenium::WebDriver::Chrome::Options.new
+chrome_options.add_preference('download.default_directory', DownloadHelpers::DOWNLOADS_DIR)
+chrome_options.add_preference('profile.default_content_setting_values.automatic_downloads', 1)
+chrome_options.add_argument('--window-size=1920,1200')
+
+Capybara.register_driver :chrome do |app|
+  Capybara::Selenium::Driver.new(
+    app,
+    browser: :chrome,
+    options: chrome_options
+  )
+end
+
+Capybara.register_driver :headless_chrome do |app|
+  options = chrome_options.dup
+  options.add_argument('--headless')
+
+  Capybara::Selenium::Driver.new(
+    app,
+    browser: :chrome,
+    options: options
+  )
+end
+
+Capybara.default_driver = ENV['BROWSER_DEBUG'] ? :chrome : :headless_chrome
+Capybara.javascript_driver = ENV['BROWSER_DEBUG'] ? :chrome : :headless_chrome
+
 RSpec.configure do |config|
   # Explicitly enable should syntax of rspec.
   config.expect_with :rspec do |expectations|
-    expectations.syntax = [:should, :expect]
+    expectations.syntax = %i[should expect]
   end
 
   # To use url_encode function in import_spec.
@@ -28,29 +59,8 @@ RSpec.configure do |config|
   config.include DownloadHelpers, type: :feature
 
   # Setup capybara tests.
-  config.before :context, type: :feature do
-    Capybara.app = SequenceServer.init
-    Capybara.server = :webrick
-    Capybara.default_max_wait_time = 30
-
-    Capybara.register_driver :selenium do |app|
-      options = Selenium::WebDriver::Firefox::Options.new
-
-      # Run the browser in headless mode.
-      options.args << '--headless'
-
-      # Tell the browser where to save downloaded files.
-      options.profile = Selenium::WebDriver::Firefox::Profile.new
-      options.profile['browser.download.dir'] = downloads_dir
-      options.profile['browser.download.folderList'] = 2
-
-      # Suppress "open with / save" dialog for FASTA, XML, TSV and PNG file types.
-      options.profile['browser.helperApps.neverAsk.saveToDisk'] =
-        'text/fasta,text/xml,text/tsv,image/png'
-      Capybara::Selenium::Driver.new(app, browser: :firefox, options: options)
-    end
-
-    FileUtils.mkdir_p downloads_dir
+  config.before :context, type: :feature do |_context|
+    FileUtils.mkdir_p DownloadHelpers::DOWNLOADS_DIR
   end
 
   config.after :example, type: :feature do
@@ -58,6 +68,10 @@ RSpec.configure do |config|
   end
 
   config.after :context, type: :feature do
-    FileUtils.rm_rf Dir[SequenceServer::DOTDIR + '/*-*-*-*-*']
+    FileUtils.rm_rf Dir[File.join(SequenceServer::DOTDIR, '*-*-*-*-*')]
+  end
+
+  config.after :context do
+    SequenceServer::Database.clear
   end
 end

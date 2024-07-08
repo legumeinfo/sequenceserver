@@ -47,8 +47,8 @@ module SequenceServer
 
       # Execute the shell command, redirect stdout and stderr to the
       # temporary files.
-      exec("#{command} 1>#{temp_files[:stdout].path}" \
-           " 2>#{temp_files[:stderr].path}")
+      exec(command, out: temp_files[:stdout].path.to_s, \
+                    err: temp_files[:stderr].path.to_s)
     end
 
     # Wait for the termination of the child process.
@@ -67,7 +67,7 @@ module SequenceServer
 
       # Now move the temporary file to the given path.
       # TODO: don't we need to explicitly close the temp file here?
-      FileUtils.mv(temp_files.delete(channel), filename)
+      FileUtils.cp(temp_files[channel], filename)
     end
 
     # Read the remaining temp files into memory. For large outputs,
