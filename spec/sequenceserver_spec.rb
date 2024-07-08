@@ -58,12 +58,12 @@ module SequenceServer
     it 'raises appropriate error if num_threads incorrectly set' do
       # Raise if not a number.
       expect do
-        SequenceServer.init(num_threads: 'foo')
+        SequenceServer.init(database_dir: File.join(__dir__, 'database'), num_threads: 'foo')
       end.to raise_error(NUM_THREADS_INCORRECT)
 
       # Raise if less than 1.
       expect do
-        SequenceServer.init(num_threads: 0)
+        SequenceServer.init(database_dir: File.join(__dir__, 'database'), num_threads: 0)
       end.to raise_error(NUM_THREADS_INCORRECT)
     end
 
@@ -85,6 +85,29 @@ module SequenceServer
                           File.join(__dir__, 'database', 'v5', 'sample'))
       Database.all.should_not be_empty
       Database.all.length.should == 4
+    end
+
+    describe '--optimistic' do
+      it 'scans for DB incompatibilities by default' do
+        allow(SequenceServer).to receive(:check_database_compatibility)
+
+        SequenceServer.init(
+          database_dir: File.join(__dir__, 'database', 'v5', 'sample')
+        )
+
+        expect(SequenceServer).to have_received(:check_database_compatibility).once
+      end
+
+      it 'scans does not scan for DB incompatibilities in optimistic mode' do
+        allow(SequenceServer).to receive(:check_database_compatibility)
+
+        SequenceServer.init(
+          database_dir: File.join(__dir__, 'database', 'v5', 'sample'),
+          optimistic: true
+        )
+
+        expect(SequenceServer).to_not have_received(:check_database_compatibility)
+      end
     end
   end
 end

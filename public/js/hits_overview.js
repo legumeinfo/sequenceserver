@@ -1,20 +1,23 @@
 import d3 from 'd3';
 import _ from 'underscore';
-import Grapher from './grapher';
+import Grapher from 'grapher';
 import * as Helpers from './visualisation_helpers';
 import Utils from './utils';
 
 class Graph {
+    static canCollapse() {
+        return true;
+    }
 
     static name() {
-        return 'Graphical overview of hits';
+        return 'Graphical overview of aligning hit sequences to the query';
     }
 
     static className() {
         return 'alignment-overview';
     }
 
-    static collapseId(props) {
+    static graphId(props) {
         return 'alignment_'+props.query.number;
     }
 
@@ -24,8 +27,8 @@ class Graph {
 
     constructor($svgContainer, props) {
         this.svg_container = $svgContainer;
-        $queryDiv = $svgContainer.parents('.resultn');
-        hits = this.extractData(props.query.hits, props.query.number);
+        var $queryDiv = $svgContainer.parents('.resultn');
+        var hits = this.extractData(props.query.hits, props.query.number);
         this.graphIt($queryDiv, $svgContainer, 0, 20, null, hits);
     }
 

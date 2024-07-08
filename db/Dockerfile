@@ -1,138 +1,48 @@
 FROM ncbi/blast:2.12.0
 
 WORKDIR /db
-VOLUME ["/db"]
 
-ENV DATA_STORE=https://data.legumeinfo.org
+#HACK: fix this later
+#ENV DATA_STORE=http://172.20.1.1:50011/datastore/v2/
+ENV DATA_STORE=https://data.legumeinfo.org/
 RUN printf '#!/bin/bash\nset -o pipefail -o errexit -o nounset; curl ${DATA_STORE}/${1} | gzip -dc | makeblastdb -parse_seqids -hash_index -dbtype ${2} -taxid ${3} -title "${4}" -out $(basename ${1#.f*.gz})\n' > /usr/local/bin/mkblastdb \
   && chmod +x /usr/local/bin/mkblastdb
 
-WORKDIR "/db/Genomic_Sequence_Collection"
-RUN mkblastdb Aeschynomene/evenia/genomes/CIAT22838.gnm1.XF73/aesev.CIAT22838.gnm1.XF73.genome_main.fna.gz nucl 561484 'Aeschynomene evenia CIAT22838 v1 genome'
-RUN mkblastdb Arachis/cardenasii/genomes/K10017.gnm1.DQ4M/araca.K10017.gnm1.DQ4M.genome_main.fna.gz nucl 51121 'Arachis cardenasii K10017 v1 genome'
-RUN mkblastdb Arachis/duranensis/genomes/V14167.gnm2.J7QH/aradu.V14167.gnm2.J7QH.genome_main.fna.gz nucl 130453 'Arachis duranensis V14167 v2 genome'
-RUN mkblastdb Arachis/hypogaea/genomes/Tifrunner.gnm2.J5K5/arahy.Tifrunner.gnm2.J5K5.genome_main.fna.gz nucl 3818 'Arachis hypogaea Tifrunner v2 genome'
-RUN mkblastdb Arachis/ipaensis/genomes/K30076.gnm2.1GWY/araip.K30076.gnm2.1GWY.genome_main.fna.gz nucl 130454 'Arachis ipaensis K30076 v2 genome'
-RUN mkblastdb Cajanus/cajan/genomes/ICPL87119.gnm1.SBGP/cajca.ICPL87119.gnm1.SBGP.genome_main.fna.gz nucl 3821 'Cajanus cajan ICPL87119 v1 genome'
-RUN mkblastdb Cercis/canadensis/genomes/ISC453364.gnm1.B05Z/cerca.ISC453364.gnm1.B05Z.genome_main.fna.gz nucl 49801 'Cercis canadensis ISC453364 v1 genome'
-RUN mkblastdb Chamaecrista/fasciculata/genomes/MN87.gnm1.JXFN/chafa.MN87.gnm1.JXFN.genome_main.fna.gz nucl 53854 'Chamaecrista fasciculata MN87 v1 genome'
-RUN mkblastdb Cicer/arietinum/genomes/CDCFrontier.gnm1.GkHc/cicar.CDCFrontier.gnm1.GkHc.genome_main.fna.gz nucl 3827 'Cicer arietinum CDCFrontier v1 genome'
-RUN mkblastdb Faidherbia/albida/genomes/WAFC.gnm1.ZT1R/faial.WAFC.gnm1.ZT1R.genome_main.fna.gz nucl 138055 'Faidherbia albida WAFC v1 genome'
-RUN mkblastdb Glycine/cyrtoloba/genomes/G1267.gnm1.YWW6/glycy.G1267.gnm1.YWW6.genome_main.fna.gz nucl 45689 'Glycine cyrtoloba G1267 v1 genome'
-RUN mkblastdb Glycine/D3-tomentella/genomes/G1403.gnm1.CL6K/glyd3.G1403.gnm1.CL6K.genome_main.fna.gz nucl 2908013 'Glycine D3-tomentella G1403 v1 genome'
-RUN mkblastdb Glycine/dolichocarpa/genomes/G1134.gnm1.PP7B/glydo.G1134.gnm1.PP7B.genome_main.fna.gz nucl 82538 'Glycine dolichocarpa G1134 v1 genome'
-RUN mkblastdb Glycine/falcata/genomes/G1718.gnm1.B1PY/glyfa.G1718.gnm1.B1PY.genome_main.fna.gz nucl 45690 'Glycine falcata G1718 v1 genome'
-RUN mkblastdb Glycine/max/genomes/Wm82.gnm4.4PTR/glyma.Wm82.gnm4.4PTR.genome_main.fna.gz nucl 3847 'Glycine max Wm82 v4 genome'
-RUN mkblastdb Glycine/soja/genomes/PI483463.gnm1.YJWS/glyso.PI483463.gnm1.YJWS.genome_main.fna.gz nucl 3848 'Glycine soja PI483463 v1 genome'
-RUN mkblastdb Glycine/stenophita/genomes/G1974.gnm1.7MZB/glyst.G1974.gnm1.7MZB.genome_main.fna.gz nucl 96944 'Glycine stenophita G1974 v1 genome'
-RUN mkblastdb Glycine/syndetika/genomes/G1300.gnm1.C11H/glysy.G1300.gnm1.C11H.genome_main.fna.gz nucl 713886 'Glycine syndetika G1300 v1 genome'
-RUN mkblastdb Lotus/japonicus/genomes/MG20.gnm3.QPGB/lotja.MG20.gnm3.QPGB.genome_main.fna.gz nucl 34305 'Lotus japonicus MG20 v3 genome'
-RUN mkblastdb Lupinus/albus/genomes/Amiga.gnm1.F4NR/lupal.Amiga.gnm1.F4NR.genome_main.fna.gz nucl 3870 'Lupinus albus Amiga v1 genome'
-RUN mkblastdb Lupinus/angustifolius/genomes/Tanjil.gnm1.Qq0N/lupan.Tanjil.gnm1.Qq0N.genome_main.fna.gz nucl 3871 'Lupinus angustifolius Tanjil v1 genome'
-RUN mkblastdb Medicago/sativa/genomes/XinJiangDaYe.gnm1.12MR/medsa.XinJiangDaYe.gnm1.12MR.genome_main.fna.gz nucl 3879 'Medicago sativa XinJiangDaYe v1 genome'
-RUN mkblastdb Medicago/truncatula/genomes/A17.gnm5.MVZ2/medtr.A17.gnm5.MVZ2.genome_main.fna.gz nucl 3880 'Medicago truncatula A17 v5 genome'
-RUN mkblastdb Phaseolus/acutifolius/genomes/Frijol_Bayo.gnm1.QH8L/phaac.Frijol_Bayo.gnm1.QH8L.genome_main.fna.gz nucl 33129 'Phaseolus acutifolius Frijol Bayo v1 genome'
-RUN mkblastdb Phaseolus/lunatus/genomes/G27455.gnm1.7NXX/phalu.G27455.gnm1.7NXX.genome_main.fna.gz nucl 3884 'Phaseolus lunatus G27455 v1 genome'
-RUN mkblastdb Phaseolus/vulgaris/genomes/G19833.gnm2.fC0g/phavu.G19833.gnm2.fC0g.genome_main.fna.gz nucl 3885 'Phaseolus vulgaris G19833 v2 genome'
-RUN mkblastdb Pisum/sativum/genomes/Cameor.gnm1.P4FG/pissa.Cameor.gnm1.P4FG.genome_main.fna.gz nucl 3888 'Pisum sativum Cameor v1 genome'
-RUN mkblastdb Trifolium/pratense/genomes/MilvusB.gnm2.gNmT/tripr.MilvusB.gnm2.gNmT.genome_main.fna.gz nucl 57577 'Trifolium pratense Milvus B v2 genome'
-RUN mkblastdb Vigna/angularis/genomes/Gyeongwon.gnm3.JyYC/vigan.Gyeongwon.gnm3.JyYC.genome_main.fna.gz nucl 3914 'Vigna angularis Gyeongwon v3 genome'
-RUN mkblastdb Vigna/radiata/genomes/VC1973A.gnm6.3nL8/vigra.VC1973A.gnm6.3nL8.genome_main.fna.gz nucl 157791 'Vigna radiata VC1973A v6 genome'
-RUN mkblastdb Vigna/unguiculata/genomes/IT97K-499-35.gnm1.QnBW/vigun.IT97K-499-35.gnm1.QnBW.genome_main.fna.gz nucl 3917 'Vigna unguiculata IT97K-499-35 v1 genome'
+WORKDIR "/db/Cicer_arietinum_Genomic_Sequence_Collection"
+RUN mkblastdb Cicer/arietinum/genomes/CDCFrontier.gnm3.QT0P/cicar.CDCFrontier.gnm3.QT0P.genome_main.fna.gz nucl 3827 'C. arietinum CDCFrontier v3 genome'
+RUN mkblastdb /Cicer/arietinum/genomes/CDCFrontier.gnm2.S2FF/cicar.CDCFrontier.gnm2.S2FF.genome_main.fna.gz nucl 3827 'C. arietinum CDCFrontier v2 genome'
+RUN mkblastdb Cicer/arietinum/genomes/CDCFrontier.gnm1.GkHc/cicar.CDCFrontier.gnm1.GkHc.genome_main.fna.gz nucl 3827 'C. arietinum CDCFrontier v1 genome'
+RUN mkblastdb Cicer/arietinum/genomes/ICC4958.gnm2.bg5m/cicar.ICC4958.gnm2.bg5m.genome_main.fna.gz nucl 3827 'C. arietinum ICC4958 v2 genome'
 
-WORKDIR "/db/mRNA_Sequence_Collection"
-RUN mkblastdb Aeschynomene/evenia/annotations/CIAT22838.gnm1.ann1.ZM3R/aesev.CIAT22838.gnm1.ann1.ZM3R.mrna.fna.gz nucl 561484 'Aeschynomene evenia CIAT22838 v1.1 mRNAs'
-RUN mkblastdb Arachis/duranensis/annotations/V14167.gnm1.ann1.cxSM/aradu.V14167.gnm1.ann1.cxSM.mrna.fna.gz nucl 130453 'Arachis duranensis v1.1 mRNAs'
-RUN mkblastdb Arachis/hypogaea/annotations/Tifrunner.gnm2.ann1.4K0L/arahy.Tifrunner.gnm2.ann1.4K0L.mrna.fna.gz nucl 3818 'Arachis hypogaea Tifrunner v2.1 mRNAs'
-RUN mkblastdb Arachis/ipaensis/annotations/K30076.gnm1.ann1.J37m/araip.K30076.gnm1.ann1.J37m.mrna.fna.gz nucl 130454 'Arachis ipaensis K30076 v1.1 mRNAs'
-RUN mkblastdb Cajanus/cajan/annotations/ICPL87119.gnm1.ann1.Y27M/cajca.ICPL87119.gnm1.ann1.Y27M.mrna.fna.gz nucl 3821 'Cajanus cajan ICPL87119 v1.1 mRNAs'
-RUN mkblastdb Cercis/canadensis/annotations/ISC453364.gnm1.ann1.HZJM/cerca.ISC453364.gnm1.ann1.B05Z.mrna.fna.gz nucl 49801 'Cercis canadensis ISC453364 v1.1 mRNAs'
-RUN mkblastdb Chamaecrista/fasciculata/annotations/MN87.gnm1.ann1.LWFM/chafa.MN87.gnm1.ann1.LWFM.mrna.fna.gz nucl 53854 'Chamaecrista fasciculata MN87 v1.1 pmRNAs'
-RUN mkblastdb Cicer/arietinum/annotations/CDCFrontier.gnm1.ann1.nRhs/cicar.CDCFrontier.gnm1.ann1.nRhs.mrna.fna.gz nucl 3827 'Cicer arietinum CDCFrontier v1.1 mRNAs'
-RUN mkblastdb Faidherbia/albida/annotations/WAFC.gnm1.ann1.RTP9/faial.WAFC.gnm1.ann1.RTP9.mrna.fna.gz nucl 138055 'Faidherbia albida WAFC v1.1 mRNAs'
-RUN mkblastdb Glycine/cyrtoloba/annotations/G1267.gnm1.ann1.HRFD/glycy.G1267.gnm1.ann1.HRFD.mrna.fna.gz nucl 45689 'Glycine cyrtoloba G1267 v1.1 mRNAs'
-RUN mkblastdb Glycine/D3-tomentella/annotations/G1403.gnm1.ann1.XNZQ/glyd3.G1403.gnm1.ann1.XNZQ.mrna.fna.gz nucl 2908013 'Glycine D3-tomentella G1403 v1.1 mRNAs'
-RUN mkblastdb Glycine/dolichocarpa/annotations/G1134.gnm1.ann1.4BJM/glydo.G1134.gnm1.ann1.4BJM.mrna.fna.gz nucl 82538 'Glycine dolichocarpa G1134 v1.1 mRNAs'
-RUN mkblastdb Glycine/falcata/annotations/G1718.gnm1.ann1.2KSV/glyfa.G1718.gnm1.ann1.2KSV.mrna.fna.gz nucl 45690 'Glycine falcata G1718 v1.1 mRNAs'
-RUN mkblastdb Glycine/max/annotations/Wm82.gnm4.ann1.T8TQ/glyma.Wm82.gnm4.ann1.T8TQ.mrna.fna.gz nucl 3847 'Glycine max Wm82 v4.1 mRNAs'
-RUN mkblastdb Glycine/soja/annotations/PI483463.gnm1.ann1.3Q3Q/glyso.PI483463.gnm1.ann1.3Q3Q.mrna.fna.gz nucl 3848 'Glycine soja PI483463 v1.1 mRNAs'
-RUN mkblastdb Glycine/stenophita/annotations/G1974.gnm1.ann1.F257/glyst.G1974.gnm1.ann1.F257.mrna.fna.gz nucl 96944 'Glycine stenophita G1974 v1.1 mRNAs'
-RUN mkblastdb Glycine/syndetika/annotations/G1300.gnm1.ann1.RRK6/glysy.G1300.gnm1.ann1.RRK6.mrna.fna.gz nucl 713886 'Glycine syndetika G1300 v1.1 mRNAs'
-RUN mkblastdb Lotus/japonicus/annotations/MG20.gnm3.ann1.WF9B/lotja.MG20.gnm3.ann1.WF9B.mrna.fna.gz nucl 34305 'Lotus japonicus MG20 v3.1 mRNAs'
-RUN mkblastdb Lupinus/albus/annotations/Amiga.gnm1.ann1.3GKS/lupal.Amiga.gnm1.ann1.3GKS.mrna.fna.gz nucl 3870 'Lupinus albus Amiga v1.1 mRNAs'
-RUN mkblastdb Lupinus/angustifolius/annotations/Tanjil.gnm1.ann1.nnV9/lupan.Tanjil.gnm1.ann1.nnV9.mrna.fna.gz nucl 3871 'Lupinus angustifolius Tanjil v1.1 mRNAs'
-RUN mkblastdb Medicago/truncatula/annotations/A17.gnm5.ann1_6.L2RX/medtr.A17.gnm5.ann1_6.L2RX.mrna.fna.gz nucl 3880 'Medicago truncatula A17 v5.1.6 mRNAs'
-RUN mkblastdb Medicago/sativa/annotations/XinJiangDaYe.gnm1.ann1.RKB9/medsa.XinJiangDaYe.gnm1.ann1.RKB9.mrna.fna.gz nucl 3879 'Medicago sativa XinJiangDaYe v1.1 mRNAs'
-RUN mkblastdb Phaseolus/acutifolius/annotations/Frijol_Bayo.gnm1.ann1.ML22/phaac.Frijol_Bayo.gnm1.ann1.ML22.mrna.fna.gz nucl 33129 'Phaseolus acutifolius Frijol Bayo v1.1 mRNAs'
-RUN mkblastdb Phaseolus/lunatus/annotations/G27455.gnm1.ann1.JD7C/phalu.G27455.gnm1.ann1.JD7C.mrna.fna.gz nucl 3884 'Phaseolus lunatus G27455 v1.1 mRNAs'
-RUN mkblastdb Phaseolus/vulgaris/annotations/G19833.gnm2.ann1.PB8d/phavu.G19833.gnm2.ann1.PB8d.mrna.fna.gz nucl 3885 'Phaseolus vulgaris G19833 v2.1 mRNAs'
-RUN mkblastdb Pisum/sativum/annotations/Cameor.gnm1.ann1.7SZR/pissa.Cameor.gnm1.ann1.7SZR.mrna.fna.gz nucl 3888 'Pisum sativum Cameor v1.1 mRNAs'
-RUN mkblastdb Trifolium/pratense/annotations/MilvusB.gnm2.ann1.DFgp/tripr.MilvusB.gnm2.ann1.DFgp.mrna.fna.gz nucl 57577 'Trifolium pratense Milvus B v2.1 mRNAs'
-RUN mkblastdb Vigna/angularis/annotations/Gyeongwon.gnm3.ann1.3Nz5/vigan.Gyeongwon.gnm3.ann1.3Nz5.mrna.fna.gz nucl 3914 'Vigna angularis Gyeongwon v3.1 mRNAs'
-RUN mkblastdb Vigna/radiata/annotations/VC1973A.gnm6.ann1.M1Qs/vigra.VC1973A.gnm6.ann1.M1Qs.mrna.fna.gz nucl 157791 'Vigna radiata VC1973A v6.1 mRNAs'
-RUN mkblastdb Vigna/unguiculata/annotations/IT97K-499-35.gnm1.ann2.FD7K/vigun.IT97K-499-35.gnm1.ann2.FD7K.mrna.fna.gz nucl 3917 'Vigna unguiculata IT97K-499-35 v1.2 mRNAs'
+WORKDIR "/db/Cicer_arietinum_mRNA_Sequence_Collection"
+RUN mkblastdb Cicer/arietinum/annotations/CDCFrontier.gnm3.ann1.NPD7/cicar.CDCFrontier.gnm3.ann1.NPD7.mrna.fna.gz nucl 3827 'C. arietinum CDCFrontier v3.1 mRNAs'
+RUN mkblastdb Cicer/arietinum/annotations/CDCFrontier.gnm2.ann1.9M1L/cicar.CDCFrontier.gnm2.ann1.9M1L.mrna_primary.fna.gz nucl 3827 'C. arietinum CDCFrontier v2.1 mRNAs'
+RUN mkblastdb Cicer/arietinum/annotations/CDCFrontier.gnm1.ann1.nRhs/cicar.CDCFrontier.gnm1.ann1.nRhs.mrna.fna.gz nucl 3827 'C. arietinum CDCFrontier v1.1 mRNAs'
+RUN mkblastdb Cicer/arietinum/annotations/ICC4958.gnm2.ann1.LCVX/cicar.ICC4958.gnm2.ann1.LCVX.mrna_primary.fna.gz nucl 3827 'C. arietinum ICC4958 v2.1 mRNAs'
 
-WORKDIR "/db/CDS_Sequence_Collection"
-RUN mkblastdb Aeschynomene/evenia/annotations/CIAT22838.gnm1.ann1.ZM3R/aesev.CIAT22838.gnm1.ann1.ZM3R.cds.fna.gz nucl 561484 'Aeschynomene evenia CIAT22838 v1.1 CDSs'
-RUN mkblastdb Arachis/duranensis/annotations/V14167.gnm1.ann1.cxSM/aradu.V14167.gnm1.ann1.cxSM.cds.fna.gz nucl 130453 'Arachis duranensis v1.1 CDSs'
-RUN mkblastdb Arachis/hypogaea/annotations/Tifrunner.gnm2.ann1.4K0L/arahy.Tifrunner.gnm2.ann1.4K0L.cds.fna.gz nucl 3818 'Arachis hypogaea Tifrunner v2.1 CDSs'
-RUN mkblastdb Arachis/ipaensis/annotations/K30076.gnm1.ann1.J37m/araip.K30076.gnm1.ann1.J37m.cds.fna.gz nucl 130454 'Arachis ipaensis K30076 v1.1 CDSs'
-RUN mkblastdb Cajanus/cajan/annotations/ICPL87119.gnm1.ann1.Y27M/cajca.ICPL87119.gnm1.ann1.Y27M.cds.fna.gz nucl 3821 'Cajanus cajan ICPL87119 v1.1 CDSs'
-RUN mkblastdb Cercis/canadensis/annotations/ISC453364.gnm1.ann1.HZJM/cerca.ISC453364.gnm1.ann1.B05Z.cds.fna.gz nucl 49801 'Cercis canadensis ISC453364 v1.1 CDSs'
-RUN mkblastdb Chamaecrista/fasciculata/annotations/MN87.gnm1.ann1.LWFM/chafa.MN87.gnm1.ann1.LWFM.cds.fna.gz nucl 53854 'Chamaecrista fasciculata MN87 v1.1 pCDSs'
-RUN mkblastdb Cicer/arietinum/annotations/CDCFrontier.gnm1.ann1.nRhs/cicar.CDCFrontier.gnm1.ann1.nRhs.cds.fna.gz nucl 3827 'Cicer arietinum CDCFrontier v1.1 CDSs'
-RUN mkblastdb Faidherbia/albida/annotations/WAFC.gnm1.ann1.RTP9/faial.WAFC.gnm1.ann1.RTP9.cds.fna.gz nucl 138055 'Faidherbia albida WAFC v1.1 CDSs'
-RUN mkblastdb Glycine/cyrtoloba/annotations/G1267.gnm1.ann1.HRFD/glycy.G1267.gnm1.ann1.HRFD.cds.fna.gz nucl 45689 'Glycine cyrtoloba G1267 v1.1 CDSs'
-RUN mkblastdb Glycine/D3-tomentella/annotations/G1403.gnm1.ann1.XNZQ/glyd3.G1403.gnm1.ann1.XNZQ.cds.fna.gz nucl 2908013 'Glycine D3-tomentella G1403 v1.1 CDSs'
-RUN mkblastdb Glycine/dolichocarpa/annotations/G1134.gnm1.ann1.4BJM/glydo.G1134.gnm1.ann1.4BJM.cds.fna.gz nucl 82538 'Glycine dolichocarpa G1134 v1.1 CDSs'
-RUN mkblastdb Glycine/falcata/annotations/G1718.gnm1.ann1.2KSV/glyfa.G1718.gnm1.ann1.2KSV.cds.fna.gz nucl 45690 'Glycine falcata G1718 v1.1 CDSs'
-RUN mkblastdb Glycine/max/annotations/Wm82.gnm4.ann1.T8TQ/glyma.Wm82.gnm4.ann1.T8TQ.cds.fna.gz nucl 3847 'Glycine max Wm82 v4.1 CDSs'
-RUN mkblastdb Glycine/soja/annotations/PI483463.gnm1.ann1.3Q3Q/glyso.PI483463.gnm1.ann1.3Q3Q.cds.fna.gz nucl 3848 'Glycine soja PI483463 v1.1 CDSs'
-RUN mkblastdb Glycine/stenophita/annotations/G1974.gnm1.ann1.F257/glyst.G1974.gnm1.ann1.F257.cds.fna.gz nucl 96944 'Glycine stenophita G1974 v1.1 CDSs'
-RUN mkblastdb Glycine/syndetika/annotations/G1300.gnm1.ann1.RRK6/glysy.G1300.gnm1.ann1.RRK6.cds.fna.gz nucl 713886 'Glycine syndetika G1300 v1.1 CDSs'
-RUN mkblastdb Lotus/japonicus/annotations/MG20.gnm3.ann1.WF9B/lotja.MG20.gnm3.ann1.WF9B.cds.fna.gz nucl 34305 'Lotus japonicus MG20 v3.1 CDSs'
-RUN mkblastdb Lupinus/albus/annotations/Amiga.gnm1.ann1.3GKS/lupal.Amiga.gnm1.ann1.3GKS.cds.fna.gz nucl 3870 'Lupinus albus Amiga v1.1 CDSs'
-RUN mkblastdb Lupinus/angustifolius/annotations/Tanjil.gnm1.ann1.nnV9/lupan.Tanjil.gnm1.ann1.nnV9.cds.fna.gz nucl 3871 'Lupinus angustifolius Tanjil v1.1 CDSs'
-RUN mkblastdb Medicago/truncatula/annotations/A17.gnm5.ann1_6.L2RX/medtr.A17.gnm5.ann1_6.L2RX.cds.fna.gz nucl 3880 'Medicago truncatula A17 v5.1.6 CDSs'
-RUN mkblastdb Medicago/sativa/annotations/XinJiangDaYe.gnm1.ann1.RKB9/medsa.XinJiangDaYe.gnm1.ann1.RKB9.cds.fna.gz nucl 3879 'Medicago sativa XinJiangDaYe v1.1 CDSs'
-RUN mkblastdb Phaseolus/acutifolius/annotations/Frijol_Bayo.gnm1.ann1.ML22/phaac.Frijol_Bayo.gnm1.ann1.ML22.cds.fna.gz nucl 33129 'Phaseolus acutifolius Frijol Bayo v1.1 CDSs'
-RUN mkblastdb Phaseolus/lunatus/annotations/G27455.gnm1.ann1.JD7C/phalu.G27455.gnm1.ann1.JD7C.cds.fna.gz nucl 3884 'Phaseolus lunatus G27455 v1.1 CDSs'
-RUN mkblastdb Phaseolus/vulgaris/annotations/G19833.gnm2.ann1.PB8d/phavu.G19833.gnm2.ann1.PB8d.cds.fna.gz nucl 3885 'Phaseolus vulgaris G19833 v2.1 CDSs'
-RUN mkblastdb Pisum/sativum/annotations/Cameor.gnm1.ann1.7SZR/pissa.Cameor.gnm1.ann1.7SZR.cds.fna.gz nucl 3888 'Pisum sativum Cameor v1.1 CDSs'
-RUN mkblastdb Trifolium/pratense/annotations/MilvusB.gnm2.ann1.DFgp/tripr.MilvusB.gnm2.ann1.DFgp.cds.fna.gz nucl 57577 'Trifolium pratense Milvus B v2.1 CDSs'
-RUN mkblastdb Vigna/angularis/annotations/Gyeongwon.gnm3.ann1.3Nz5/vigan.Gyeongwon.gnm3.ann1.3Nz5.cds.fna.gz nucl 3914 'Vigna angularis Gyeongwon v3.1 CDSs'
-RUN mkblastdb Vigna/radiata/annotations/VC1973A.gnm6.ann1.M1Qs/vigra.VC1973A.gnm6.ann1.M1Qs.cds.fna.gz nucl 157791 'Vigna radiata VC1973A v6.1 CDSs'
-RUN mkblastdb Vigna/unguiculata/annotations/IT97K-499-35.gnm1.ann2.FD7K/vigun.IT97K-499-35.gnm1.ann2.FD7K.cds.fna.gz nucl 3917 'Vigna unguiculata IT97K-499-35 v1.2 CDSs'
+WORKDIR "/db/Cicer_arietinum_Protein_Sequence_Collection"
+RUN mkblastdb Cicer/arietinum/annotations/CDCFrontier.gnm3.ann1.NPD7/cicar.CDCFrontier.gnm3.ann1.NPD7.protein.faa.gz prot 3827 'C. arietinum CDCFrontier v3.1 Proteins'
+RUN mkblastdb Cicer/arietinum/annotations/CDCFrontier.gnm2.ann1.9M1L/cicar.CDCFrontier.gnm2.ann1.9M1L.protein_primary.faa.gz prot 3827 'C. arietinum CDCFrontier v2.1 Proteins'
+RUN mkblastdb Cicer/arietinum/annotations/CDCFrontier.gnm1.ann1.nRhs/cicar.CDCFrontier.gnm1.ann1.nRhs.protein.faa.gz prot 3827 'C. arietinum CDCFrontier v1.1 Proteins'
+RUN mkblastdb Cicer/arietinum/annotations/ICC4958.gnm2.ann1.LCVX/cicar.ICC4958.gnm2.ann1.LCVX.protein_primary.faa.gz prot 3827 'C. arietinum ICC4958 v2.1 Proteins'
 
-WORKDIR "/db/Protein_Sequence_Collection"
-RUN mkblastdb Aeschynomene/evenia/annotations/CIAT22838.gnm1.ann1.ZM3R/aesev.CIAT22838.gnm1.ann1.ZM3R.protein.faa.gz prot 561484 'Aeschynomene evenia CIAT22838 v1.1 proteins'
-RUN mkblastdb Arachis/duranensis/annotations/V14167.gnm1.ann1.cxSM/aradu.V14167.gnm1.ann1.cxSM.protein.faa.gz prot 130453 'Arachis duranensis v1.1 proteins'
-RUN mkblastdb Arachis/hypogaea/annotations/Tifrunner.gnm2.ann1.4K0L/arahy.Tifrunner.gnm2.ann1.4K0L.protein.faa.gz prot 3818 'Arachis hypogaea Tifrunner v2.1 proteins'
-RUN mkblastdb Arachis/ipaensis/annotations/K30076.gnm1.ann1.J37m/araip.K30076.gnm1.ann1.J37m.protein.faa.gz prot 130454 'Arachis ipaensis K30076 v1.1 proteins'
-RUN mkblastdb Cajanus/cajan/annotations/ICPL87119.gnm1.ann1.Y27M/cajca.ICPL87119.gnm1.ann1.Y27M.protein.faa.gz prot 3821 'Cajanus cajan ICPL87119 v1.1 proteins'
-RUN mkblastdb Cercis/canadensis/annotations/ISC453364.gnm1.ann1.HZJM/cerca.ISC453364.gnm1.ann1.B05Z.protein.faa.gz prot 49801 'Cercis canadensis ISC453364 v1.1 proteins'
-RUN mkblastdb Chamaecrista/fasciculata/annotations/MN87.gnm1.ann1.LWFM/chafa.MN87.gnm1.ann1.LWFM.protein.faa.gz prot 53854 'Chamaecrista fasciculata MN87 v1.1 pproteins'
-RUN mkblastdb Cicer/arietinum/annotations/CDCFrontier.gnm1.ann1.nRhs/cicar.CDCFrontier.gnm1.ann1.nRhs.protein.faa.gz prot 3827 'Cicer arietinum CDCFrontier v1.1 proteins'
-RUN mkblastdb Faidherbia/albida/annotations/WAFC.gnm1.ann1.RTP9/faial.WAFC.gnm1.ann1.RTP9.protein.faa.gz prot 138055 'Faidherbia albida WAFC v1.1 proteins'
-RUN mkblastdb Glycine/cyrtoloba/annotations/G1267.gnm1.ann1.HRFD/glycy.G1267.gnm1.ann1.HRFD.protein.faa.gz prot 45689 'Glycine cyrtoloba G1267 v1.1 proteins'
-RUN mkblastdb Glycine/D3-tomentella/annotations/G1403.gnm1.ann1.XNZQ/glyd3.G1403.gnm1.ann1.XNZQ.protein.faa.gz prot 2908013 'Glycine D3-tomentella G1403 v1.1 proteins'
-RUN mkblastdb Glycine/dolichocarpa/annotations/G1134.gnm1.ann1.4BJM/glydo.G1134.gnm1.ann1.4BJM.protein.faa.gz prot 82538 'Glycine dolichocarpa G1134 v1.1 proteins'
-RUN mkblastdb Glycine/falcata/annotations/G1718.gnm1.ann1.2KSV/glyfa.G1718.gnm1.ann1.2KSV.protein.faa.gz prot 45690 'Glycine falcata G1718 v1.1 proteins'
-RUN mkblastdb Glycine/max/annotations/Wm82.gnm4.ann1.T8TQ/glyma.Wm82.gnm4.ann1.T8TQ.protein.faa.gz prot 3847 'Glycine max Wm82 v4.1 proteins'
-RUN mkblastdb Glycine/soja/annotations/PI483463.gnm1.ann1.3Q3Q/glyso.PI483463.gnm1.ann1.3Q3Q.protein.faa.gz prot 3848 'Glycine soja PI483463 v1.1 proteins'
-RUN mkblastdb Glycine/stenophita/annotations/G1974.gnm1.ann1.F257/glyst.G1974.gnm1.ann1.F257.protein.faa.gz prot 96944 'Glycine stenophita G1974 v1.1 proteins'
-RUN mkblastdb Glycine/syndetika/annotations/G1300.gnm1.ann1.RRK6/glysy.G1300.gnm1.ann1.RRK6.protein.faa.gz prot 713886 'Glycine syndetika G1300 v1.1 proteins'
-RUN mkblastdb Lotus/japonicus/annotations/MG20.gnm3.ann1.WF9B/lotja.MG20.gnm3.ann1.WF9B.protein.faa.gz prot 34305 'Lotus japonicus MG20 v3.1 proteins'
-RUN mkblastdb Lupinus/albus/annotations/Amiga.gnm1.ann1.3GKS/lupal.Amiga.gnm1.ann1.3GKS.protein.faa.gz prot 3870 'Lupinus albus Amiga v1.1 proteins'
-RUN mkblastdb Lupinus/angustifolius/annotations/Tanjil.gnm1.ann1.nnV9/lupan.Tanjil.gnm1.ann1.nnV9.protein.faa.gz prot 3871 'Lupinus angustifolius Tanjil v1.1 proteins'
-RUN mkblastdb Medicago/truncatula/annotations/A17.gnm5.ann1_6.L2RX/medtr.A17.gnm5.ann1_6.L2RX.protein.faa.gz prot 3880 'Medicago truncatula A17 v5.1.6 proteins'
-RUN mkblastdb Medicago/sativa/annotations/XinJiangDaYe.gnm1.ann1.RKB9/medsa.XinJiangDaYe.gnm1.ann1.RKB9.protein.faa.gz prot 3879 'Medicago sativa XinJiangDaYe v1.1 proteins'
-RUN mkblastdb Phaseolus/acutifolius/annotations/Frijol_Bayo.gnm1.ann1.ML22/phaac.Frijol_Bayo.gnm1.ann1.ML22.protein.faa.gz prot 33129 'Phaseolus acutifolius Frijol Bayo v1.1 proteins'
-RUN mkblastdb Phaseolus/lunatus/annotations/G27455.gnm1.ann1.JD7C/phalu.G27455.gnm1.ann1.JD7C.protein.faa.gz prot 3884 'Phaseolus lunatus G27455 v1.1 proteins'
-RUN mkblastdb Phaseolus/vulgaris/annotations/G19833.gnm2.ann1.PB8d/phavu.G19833.gnm2.ann1.PB8d.protein.faa.gz prot 3885 'Phaseolus vulgaris G19833 v2.1 proteins'
-RUN mkblastdb Pisum/sativum/annotations/Cameor.gnm1.ann1.7SZR/pissa.Cameor.gnm1.ann1.7SZR.protein.faa.gz prot 3888 'Pisum sativum Cameor v1.1 proteins'
-RUN mkblastdb Trifolium/pratense/annotations/MilvusB.gnm2.ann1.DFgp/tripr.MilvusB.gnm2.ann1.DFgp.protein.faa.gz prot 57577 'Trifolium pratense Milvus B v2.1 proteins'
-RUN mkblastdb Vigna/angularis/annotations/Gyeongwon.gnm3.ann1.3Nz5/vigan.Gyeongwon.gnm3.ann1.3Nz5.protein.faa.gz prot 3914 'Vigna angularis Gyeongwon v3.1 proteins'
-RUN mkblastdb Vigna/radiata/annotations/VC1973A.gnm6.ann1.M1Qs/vigra.VC1973A.gnm6.ann1.M1Qs.protein.faa.gz prot 157791 'Vigna radiata VC1973A v6.1 proteins'
-RUN mkblastdb Vigna/unguiculata/annotations/IT97K-499-35.gnm1.ann2.FD7K/vigun.IT97K-499-35.gnm1.ann2.FD7K.protein.faa.gz prot 3917 'Vigna unguiculata IT97K-499-35 v1.2 proteins'
+WORKDIR "/db/Cicer_echinospermum_Genomic_Sequence_Collection"
+RUN mkblastdb Cicer/echinospermum/genomes/S2Drd065.gnm1.R888/cicec.S2Drd065.gnm1.R888.genome_main.fna.gz nucl 90897 'C. echinospermum S2Drd065 v1 genome'
+
+WORKDIR "/db/Cicer_echinospermum_mRNA_Sequence_Collection"
+RUN mkblastdb Cicer/echinospermum/annotations/S2Drd065.gnm1.ann1.YZ9H/cicec.S2Drd065.gnm1.ann1.YZ9H.mrna.fna.gz nucl 90897 'C. echinospermum v1.1 mRNAs'
+
+WORKDIR "/db/Cicer_echinospermum_Protein_Sequence_Collection"
+RUN mkblastdb Cicer/echinospermum/annotations/S2Drd065.gnm1.ann1.YZ9H/cicec.S2Drd065.gnm1.ann1.YZ9H.protein.faa.gz prot 90897 'C. echinospermum v1.1 Proteins'
+
+WORKDIR "/db/Cicer_reticulatum_Genomic_Sequence_Collection"
+RUN mkblastdb Cicer/reticulatum/genomes/Besev079.gnm1.2FZC/cicre.Besev079.gnm1.2FZC.genome_main.fna.gz nucl 90898 'C. reticulatum Besev079 v1 genome'
+
+WORKDIR "/db/Cicer_reticulatum_mRNA_Sequence_Collection"
+RUN mkblastdb Cicer/reticulatum/annotations/Besev079.gnm1.ann1.F01Z/cicre.Besev079.gnm1.ann1.F01Z.mrna.fna.gz nucl 90898 'C. reticulatum Besev079 v1.1 mRNAs'
+
+WORKDIR "/db/Cicer_reticulatum_Protein_Sequence_Collection"
+RUN mkblastdb Cicer/reticulatum/annotations/Besev079.gnm1.ann1.F01Z/cicre.Besev079.gnm1.ann1.F01Z.protein.faa.gz prot 90898 'C. reticulatum Besev079 v1.1 Proteins'
+
+VOLUME ["/db"]
 
