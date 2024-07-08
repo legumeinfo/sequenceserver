@@ -1,12 +1,15 @@
 require 'json'
 require 'tilt/erb'
 require 'sinatra/base'
+require 'rest-client'
 
 require 'sequenceserver/job'
 require 'sequenceserver/blast'
+require 'sequenceserver/blast/tasks'
 require 'sequenceserver/report'
 require 'sequenceserver/database'
 require 'sequenceserver/sequence'
+require 'rack/csrf'
 
 module SequenceServer
   # Controller.
@@ -27,6 +30,12 @@ module SequenceServer
 
       # We don't want Sinatra do setup any loggers for us. We will use our own.
       set :logging, nil
+
+      # Override in config.ru if the instance is served under a subpath
+      # e.g. for example.org/our-sequenceserver set to '/our-sequenceserver'
+      set :root_path_prefix, ''
+
+      set :search_layout, :'search_layout'
     end
 
     # See
@@ -51,6 +60,16 @@ module SequenceServer
         frame_options && { frame_options: frame_options }
       }
 
+      use(
+        Rack::Session::Cookie,
+        key: 'rack.session.sequenceserver',
+        secret: ENV.fetch('SESSION_SECRET') { SecureRandom.alphanumeric(64) }
+      )
+
+      use Rack::Csrf, raise: true, skip: ['POST:/cloud_share']
+    end
+
+    unless ENV['SEQUENCE_SERVER_COMPRESS_RESPONSES'] == 'false'
       # Serve compressed responses.
       use Rack::Deflater
     end
@@ -67,7 +86,7 @@ module SequenceServer
 
     # Returns base HTML. Rest happens client-side: rendering the search form.
     get '/' do
-      erb :search, layout: true
+      erb :search, layout: settings.search_layout
     end
 
     # Returns data that is used to render the search form client side. These
@@ -76,12 +95,11 @@ module SequenceServer
       searchdata = {
         query: Database.retrieve(params[:query]),
         database: Database.all,
-        options: SequenceServer.config[:options]
+        options: SequenceServer.config[:options],
+        blastTaskMap: SequenceServer::BLAST::Tasks.to_h
       }
 
-      if SequenceServer.config[:databases_widget] == 'tree'
-        searchdata.update(tree: Database.tree)
-      end
+      searchdata.update(tree: Database.tree) if SequenceServer.config[:databases_widget] == 'tree'
 
       # If a job_id is specified, update searchdata from job meta data (i.e.,
       # query, pre-selected databases, advanced options used). Query is only
@@ -95,7 +113,7 @@ module SequenceServer
     post '/' do
       if params[:input_sequence]
         @input_sequence = params[:input_sequence]
-        erb :search, layout: true
+        erb :search, layout: settings.search_layout
       else
         job = Job.create(params)
         redirect to("/#{job.id}")
@@ -106,16 +124,27 @@ module SequenceServer
     # an empty body if the job hasn't finished yet.
     get '/:jid.json' do |jid|
       job = Job.fetch(jid)
+      halt 404, { error: 'Job not found' }.to_json if job.nil?
       halt 202 unless job.done?
-      Report.generate(job).to_json
+
+      report = BLAST::Report.new(job)
+      halt 202 unless report.done?
+
+      if display_large_result_warning?(report.xml_file_size)
+        halt 200, large_result_warning_payload(jid).to_json
+      end
+
+      report.to_json
     end
 
     # Returns base HTML. Rest happens client-side: polling for and rendering
     # the results.
-    get '/:jid' do
+    get '/:jid' do |jid|
+      job = Job.fetch(jid)
+      halt 404, File.read(File.join(settings.root, 'public/404.html')) if job.nil?
+
       erb :report, layout: true
     end
-
     # @params sequence_ids: whitespace separated list of sequence ids to
     # retrieve
     # @params database_ids: whitespace separated list of database ids to
@@ -127,26 +156,100 @@ module SequenceServer
     # in identifiers) and retreival_databases (we don't allow whitespace in a
     # database's name, so it's safe).
     get '/get_sequence/' do
-      sequence_ids = params[:sequence_ids].split(',')
-      database_ids = params[:database_ids].split(',')
+      sequence_ids = params[:sequence_ids].to_s.split(',')
+      database_ids = params[:database_ids].to_s.split(',')
+      if sequence_ids.empty?
+        status 422
+        return { error: 'No sequence ids provided' }.to_json
+      end
+
+      if database_ids.empty?
+        status 422
+        return { error: 'No database ids provided' }.to_json
+      end
       sequences = Sequence::Retriever.new(sequence_ids, database_ids)
       sequences.to_json
     end
 
     post '/get_sequence' do
-      sequence_ids = params['sequence_ids'].split(',')
-      database_ids = params['database_ids'].split(',')
+      sequence_ids = params['sequence_ids'].to_s.split(',')
+      database_ids = params['database_ids'].to_s.split(',')
+
+      if sequence_ids.empty?
+        status 422
+        return 'No sequence ids provided'
+      end
+
+      if database_ids.empty?
+        status 422
+        return 'No database ids provided'
+      end
+
       sequences = Sequence::Retriever.new(sequence_ids, database_ids, true)
       send_file(sequences.file.path,
-                type:     sequences.mime,
+                type: sequences.mime,
                 filename: sequences.filename)
     end
 
     # Download BLAST report in various formats.
     get '/download/:jid.:type' do |jid, type|
       job = Job.fetch(jid)
+      halt 404, { error: 'Job not found' }.to_json if job.nil?
       out = BLAST::Formatter.new(job, type)
-      send_file out.file, filename: out.filename, type: out.mime
+      halt 404, { error: 'File not found"' }.to_json unless File.exist?(out.filepath)
+      send_file out.filepath, filename: out.filename, type: out.mime
+    end
+
+    post '/cloud_share' do
+      content_type :json
+      request_params = JSON.parse(request.body.read)
+      job = Job.fetch(request_params['job_id'])
+      halt 404, { error: 'Job not found' }.to_json if job.nil?
+
+      unless job.done?
+        status 422
+        { errors: ["Job #{request_params['job_id']} is not finished yet."] }.to_json
+      end
+
+      unless SequenceServer.config[:cloud_share_url]
+        status 503
+        { errors: ['Sorry, cloud sharing is not enabled on this server.'] }.to_json
+      end
+
+      begin
+        job.as_archived_file do |archived_job_file|
+          cloud_share_response = RestClient.post(
+            SequenceServer.config[:cloud_share_url],
+            {
+              shared_job: {
+                sender: {
+                  email: request_params['sender_email']
+                },
+                archived_job_file: archived_job_file,
+                original_job_id: job.id
+              }
+            }
+          )
+
+          return cloud_share_response.body
+        end
+      rescue RestClient::ExceptionWithResponse => e
+        cloud_share_response = e.response
+
+        case cloud_share_response.code
+        when 413
+          halt 413,
+               { errors: ['Sorry, the results are too large to share, please consider \
+                  using https://sequenceserver.com/cloud'] }.to_json
+        when 422
+          halt 422, JSON.parse(cloud_share_response.body).to_json
+        else
+          error cloud_share_response.code,
+                { errors: ["Unexpected Cloudshare response: #{cloud_share_response.code}"] }.to_json
+        end
+      rescue Errno::ECONNREFUSED
+        error 503, { errors: ['Sorry, the cloud sharing server may not be running. Try again later.'] }.to_json
+      end
     end
 
     # Catches any exception raised within the app and returns JSON
@@ -173,6 +276,7 @@ module SequenceServer
     # more_info.
     error 400..500 do
       error = env['sinatra.error']
+      return unless error
 
       # All errors will have a message.
       error_data = { message: error.message }
@@ -193,16 +297,24 @@ module SequenceServer
         error_data[:more_info] = error.backtrace.join("\n")
       end
 
-      error_data.to_json
+      if request.env['HTTP_ACCEPT'].to_s.include?('application/json')
+        status 422
+        content_type :json
+        error_data.to_json
+      else
+        content_type :html
+        erb :error, locals: { error_data: error_data }, layout: true
+      end
     end
 
     # Get the query sequences, selected databases, and advanced params used.
     def update_searchdata_from_job(searchdata)
-      job = Job.fetch(params[:job_id])
+      job = fetch_job(params[:job_id])
+      return { error: 'Job not found' }.to_json if job.nil?
       return if job.imported_xml_file
 
       # Only read job.qfile if we are not going to use Database.retrieve.
-      searchdata[:query] = File.read(job.qfile) if !params[:query]
+      searchdata[:query] = File.read(job.qfile) unless params[:query]
 
       # Which databases to pre-select.
       searchdata[:preSelectedDbs] = job.databases
@@ -213,7 +325,45 @@ module SequenceServer
       # default advanced parameters from the advanced params input field. In
       # this case, we do want the advanced params input field to be empty when
       # the user hits the back button. Thus we do not test for empty string.
-      searchdata[:options][job.method] = [job.advanced] if job.advanced
+      method = job.method.to_sym
+      if job.advanced && job.advanced !=
+                         searchdata.dig(:options, method, :default, :attributes).to_a.join(' ')
+        searchdata[:options] = searchdata[:options].deep_copy
+        searchdata[:options][method]['last search'] = { attributes: [job.advanced] }
+      end
+    end
+
+    def display_large_result_warning?(xml_file_size)
+      threshold = SequenceServer.config[:large_result_warning_threshold].to_i
+      return false unless threshold.positive?
+
+      return false if params[:bypass_file_size_warning] == 'true'
+
+      xml_file_size > threshold
+    end
+
+    def large_result_warning_payload(jid)
+      {
+        user_warning: 'LARGE_RESULT',
+        download_links: [
+          { name: 'Standard Tabular Report', url: "download/#{jid}.std_tsv" },
+          { name: 'Full Tabular Report', url: "/download/#{jid}.full_tsv" },
+          { name: 'Results in XML', url: "/download/#{jid}.xml" },
+          { name: 'Pairwise', url: "/download/#{jid}.pairwise" },
+        ]
+      }
+    end
+
+    helpers do
+      def root_path_prefix
+        settings.root_path_prefix.to_s
+      end
+    end
+
+    private
+
+    def fetch_job(job_id)
+      Job.fetch(job_id)
     end
   end
 end
