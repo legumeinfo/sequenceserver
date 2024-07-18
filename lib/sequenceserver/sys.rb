@@ -45,6 +45,10 @@ module SequenceServer
       # Change to the specified directory.
       Dir.chdir(options[:dir]) if options[:dir] && Dir.exist?(options[:dir])
 
+      if ENV.has_key?('SEQUENCESERVER_JOB_TIMEOUT')
+        Process::setrlimit(:CPU, Integer(ENV['SEQUENCESERVER_JOB_TIMEOUT'], 10))
+      end
+
       # Execute the shell command, redirect stdout and stderr to the
       # temporary files.
       exec(command, out: temp_files[:stdout].path.to_s, \

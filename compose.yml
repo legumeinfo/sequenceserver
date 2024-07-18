@@ -6,6 +6,8 @@ services:
     build: .
     volumes_from: ["db"]
     restart: always
+    environment:
+      SEQUENCESERVER_JOB_TIMEOUT: "300"
     init: true
     # sequenceserver leaks some memory with each query, and has observed to emit the error
     #     `fork': Cannot allocate memory - fork(2) (Errno::ENOMEM)
