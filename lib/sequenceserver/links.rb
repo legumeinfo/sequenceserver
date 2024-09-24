@@ -60,25 +60,25 @@ module SequenceServer
     #     query_coords = coordinates[0]
     #     hit_coords = coordinates[1]
 
-    def lis
-      if id.match("gnm.*\.ann") 
-          url = "https://www.legumefederation.org/en/linkout_mgr/?gene=" + id
-          {
-            order: 2,
-            title: 'LIS gene linkouts',
-            url:   url,
-            icon:  'fa-link'
-          }
-      else
-          url = "https://www.legumefederation.org/en/linkout_mgr/?seqname=" + id + "&start=" + coordinates[1][0].to_s() + "&end=" + coordinates[1][1].to_s()
-          {
-            order: 2,
-            title: 'LIS region linkouts',
-            url:   url,
-            icon:  'fa-link'
-          }
-      end
-    end
+#    def lis
+#      if id.match("gnm.*\.ann") 
+#          url = "https://www.legumefederation.org/en/linkout_mgr/?gene=" + id
+#          {
+#            order: 2,
+#            title: 'LIS gene linkouts',
+#            url:   url,
+#            icon:  'fa-link'
+#          }
+#      else
+#          url = "https://www.legumefederation.org/en/linkout_mgr/?seqname=" + id + "&start=" + coordinates[1][0].to_s() + "&end=" + coordinates[1][1].to_s()
+#          {
+#            order: 2,
+#            title: 'LIS region linkouts',
+#            url:   url,
+#            icon:  'fa-link'
+#          }
+#      end
+#    end
 
     def jbrowse
       # Create the JBrowse link only for genomic regions, not genes
