@@ -87,8 +87,10 @@ module SequenceServer
       end
 
       # Prepare other fields besides sessionTracks
-      locStart = coordinates[1][0].to_s()
-      locEnd = coordinates[1][1].to_s()
+      #locStart = coordinates[1][0].to_s()
+      #locEnd = coordinates[1][1].to_s()
+      locStart = hsps[0].sstart.to_s()
+      locEnd = hsps[0].send.to_s()
       assembly = id.match('^.+gnm\d+')[0]
       tracks = 'sequenceserver_track'
 
@@ -135,7 +137,11 @@ module SequenceServer
 
       # Assemble the JBrowse link URL from the fields above
       url = 'https://dev.peanutbase.org/tools/jbrowse2/'
-      url << '?loc=' + id + ':' + locStart + '-' + locEnd
+      if locStart <= locEnd
+        url << '?loc=' + id + ':' + locStart + '-' + locEnd
+      else
+        url << '?loc=' + id + ':' + locEnd + '-' + locStart
+      end
       url << '&assembly=' + assembly
       url << '&tracks=' + tracks
       url << '&sessionTracks=' + sessionTracks
