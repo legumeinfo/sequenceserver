@@ -14,4 +14,4 @@ services:
     healthcheck:
       test: ["CMD-SHELL", "{ curl -qo /dev/null http://localhost:4567/searchdata.json || exit 1; } && [ $$(ps -p $$(pgrep --parent 1 --ful sequenceserver) -o rss=) -lt 4000000 ] || kill 1"]
     ports:
-      - "4567:4567"
+      - "${REVERSE_PROXY_PORT}:4567"

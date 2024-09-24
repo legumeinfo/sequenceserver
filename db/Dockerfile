@@ -1,7 +1,6 @@
 FROM ncbi/blast-static:2.14.1
 
 WORKDIR /db
-VOLUME ["/db"]
 
 ENV DATA_STORE=https://data.legumeinfo.org
 RUN printf '#!/bin/bash\nset -o pipefail -o errexit -o nounset; curl ${DATA_STORE}/${1} | gzip -dc | makeblastdb -parse_seqids -hash_index -dbtype ${2} -taxid ${3} -title "${4}" -out $(basename ${1#.f*.gz})\n' > /usr/local/bin/mkblastdb \
@@ -109,3 +108,4 @@ RUN mkblastdb Vigna/angularis/annotations/Gyeongwon.gnm3.ann1.3Nz5/vigan.Gyeongw
 RUN mkblastdb Vigna/radiata/annotations/VC1973A.gnm7.ann1.RWBG/vigra.VC1973A.gnm7.ann1.RWBG.protein.faa.gz prot 157791 'Vigna radiata VC1973A v7.1 proteins'
 RUN mkblastdb Vigna/unguiculata/annotations/IT97K-499-35.gnm1.ann2.FD7K/vigun.IT97K-499-35.gnm1.ann2.FD7K.protein_primary.faa.gz prot 3917 'Vigna unguiculata IT97K-499-35 v1.2 proteins'
 
+VOLUME ["/db"]
