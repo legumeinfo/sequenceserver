@@ -1,9 +1,9 @@
 # Build variables. These need to be declared befored the first FROM
 # for the variables to be accessible in FROM instruction.
-ARG BLAST_VERSION=2.14.1
+ARG BLAST_VERSION=2.15.0
 
 ## Stage 1: gem dependencies.
-FROM docker.io/library/ruby:3.2-bullseye AS builder
+FROM docker.io/library/ruby:3.2-bookworm AS builder
 
 # Copy over files required for installing gem dependencies.
 WORKDIR /sequenceserver
@@ -22,7 +22,7 @@ RUN bundle install --without=development
 FROM docker.io/ncbi/blast-static:${BLAST_VERSION} AS ncbi-blast
 
 ## Stage 3: Puting it together.
-FROM docker.io/library/ruby:3.2-bullseye AS final
+FROM docker.io/library/ruby:3.2-bookworm AS final
 
 LABEL Description="Intuitive local web frontend for the BLAST bioinformatics tool"
 LABEL MailingList="https://groups.google.com/forum/#!forum/sequenceserver"
@@ -82,8 +82,8 @@ ENV PATH=${PWD}/node_modules/.bin:${PATH}
 COPY public public
 RUN npm run-script build
 
-## soybase: always build JS to get database_tree.js customization
-FROM final
+## Stage 5 (optional) minify
+FROM final AS minify
 
 COPY --from=node /usr/src/app/public/sequenceserver-*.min.js public/
 COPY --from=node /usr/src/app/public/css/sequenceserver.min.css public/css/
@@ -95,7 +95,7 @@ RUN bash -o pipefail -c 'curl --ipv4 -C - ftp://ftp.ncbi.nlm.nih.gov/blast/db/ta
 RUN printf ':databases_widget: tree\n' >> ~/.sequenceserver.conf
 
 ## Stage 6 (optional) Pull the example database from the debian package.
-FROM docker.io/library/ruby:3.2-bullseye AS example_db
+FROM docker.io/library/ruby:3.2-bookworm AS example_db
 
 WORKDIR /tmp
 RUN apt-get update && apt-get download ncbi-blast+ && dpkg-deb -xv ncbi-blast+*.deb .
