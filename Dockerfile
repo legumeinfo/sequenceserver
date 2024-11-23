@@ -63,6 +63,8 @@ RUN mkdir -p /db && echo 'n' | script -qfec "bundle exec bin/sequenceserver -s -
 # Prevent SequenceServer from prompting user to join announcements list.
 RUN mkdir -p ~/.sequenceserver && touch ~/.sequenceserver/asked_to_join
 
+COPY ./makeblastdb.sh /usr/local/bin/makeblastdb.sh
+
 # Add SequenceServer's bin directory to PATH and set ENTRYPOINT to
 # 'bundle exec'. Combined, this simplifies passing command-line
 # arguments to SequenceServer, while retaining the ability to run
