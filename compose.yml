@@ -1,11 +1,17 @@
 services:
-  db:
-    build: db
+  makeblastdb:
+    build:
+      context: .
+      target: final
+    entrypoint: /usr/local/bin/makeblastdb.sh
+    volumes:
+      - ./makeblastdb.sh:/usr/local/bin/makeblastdb.sh:ro
+      - db:/db:rw
 
   sequenceserver:
-    build: .
-    volumes_from: ["db"]
-    restart: always
+    build:
+      context: .
+      target: minify
     init: true
     # sequenceserver leaks some memory with each query, and has observed to emit the error
     #     `fork': Cannot allocate memory - fork(2) (Errno::ENOMEM)
@@ -13,5 +19,16 @@ services:
     # effectively restarts the container when sequenceserver RSS exceeds 4 GB.
     healthcheck:
       test: ["CMD-SHELL", "{ curl -qo /dev/null http://localhost:4567/searchdata.json || exit 1; } && [ $$(ps -p $$(pgrep --parent 1 --ful sequenceserver) -o rss=) -lt 4000000 ] || kill 1"]
+    environment:
+      # blast job CPU time limit in seconds (wurmlab/sequenceserver issue #770)
+      SEQUENCESERVER_JOB_TIMEOUT: "300"
     ports:
       - "${REVERSE_PROXY_PORT}:4567"
+    volumes:
+      - db:/db:ro
+    depends_on:
+      makeblastdb:
+        condition: service_completed_successfully
+
+volumes:
+  db:
