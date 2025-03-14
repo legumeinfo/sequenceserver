@@ -19,8 +19,6 @@ mkblastdb() (
   esac
   curl --fail --no-progress-meter "${url}" |
     gzip -dc |
-      #this de-yuckification was causing issues with getting assembly names for JBrowse linking; leaving a vestige in case we decide to revisit
-      #sed 's/\(gly[a-z][a-z]\.[[:alnum:]]\{1,\}\.gnm[0-9]\{1,\}\.\(ann[0-9]\{1,\}\.\)\{0,1\}\([^[:space:]]*\)\)/\3 dsid=\1/' |
         makeblastdb -parse_seqids -hash_index -dbtype ${3} -taxid ${4} -title "${5}" -out "${seqfile}"
   mv ${seqfile}.* "${outdir}"
   touch "${seqfile}.done"
@@ -36,7 +34,7 @@ mkblastdb Genomic_Sequence_Collection Arachis/hypogaea/genomes/Tifrunner.gnm2.J5
 mkblastdb Genomic_Sequence_Collection Arachis/ipaensis/genomes/K30076.gnm2.1GWY/araip.K30076.gnm2.1GWY.genome_main.fna.gz nucl 130454 'Arachis ipaensis K30076 v2 genome'
 mkblastdb Genomic_Sequence_Collection Cajanus/cajan/genomes/ICPL87119.gnm2.KL9M/cajca.ICPL87119.gnm2.KL9M.genome_main.fna.gz nucl 3821 'Cajanus cajan ICPL87119 v2 genome'
 mkblastdb Genomic_Sequence_Collection Cercis/canadensis/genomes/ISC453364.gnm3.GWXB/cerca.ISC453364.gnm3.GWXB.genome_main.fna.gz nucl 49801 'Cercis canadensis ISC453364 v3 genome'
-mkblastdb Genomic_Sequence_Collection Chamaecrista/fasciculata/genomes/MN87.gnm1.JXFN/chafa.MN87.gnm1.JXFN.genome_main.fna.gz nucl 53854 'Chamaecrista fasciculata MN87 v1 genome'
+mkblastdb Genomic_Sequence_Collection Chamaecrista/fasciculata/genomes/ISC494698.gnm1.8Q19/chafa.ISC494698.gnm1.8Q19.genome_main.fna.gz nucl 53854 'Chamaecrista fasciculata ISC494698 v1 genome'
 mkblastdb Genomic_Sequence_Collection Cicer/arietinum/genomes/CDCFrontier.gnm1.GkHc/cicar.CDCFrontier.gnm1.GkHc.genome_main.fna.gz nucl 3827 'Cicer arietinum CDCFrontier v1 genome'
 mkblastdb Genomic_Sequence_Collection Faidherbia/albida/genomes/WAFC.gnm1.ZT1R/faial.WAFC.gnm1.ZT1R.genome_main.fna.gz nucl 138055 'Faidherbia albida WAFC v1 genome'
 mkblastdb Genomic_Sequence_Collection Glycine/cyrtoloba/genomes/G1267.gnm1.YWW6/glycy.G1267.gnm1.YWW6.genome_main.fna.gz nucl 45689 'Glycine cyrtoloba G1267 v1 genome'
@@ -68,7 +66,7 @@ mkblastdb mRNA_Sequence_Collection Arachis/hypogaea/annotations/Tifrunner.gnm2.a
 mkblastdb mRNA_Sequence_Collection Arachis/ipaensis/annotations/K30076.gnm1.ann1.J37m/araip.K30076.gnm1.ann1.J37m.mrna.fna.gz nucl 130454 'Arachis ipaensis K30076 v1.1 mRNAs'
 mkblastdb mRNA_Sequence_Collection Cajanus/cajan/annotations/ICPL87119.gnm2.ann1.L3ZH/cajca.ICPL87119.gnm2.ann1.L3ZH.mrna_primary.fna.gz nucl 3821 'Cajanus cajan ICPL87119 v2.1 mRNAs'
 mkblastdb mRNA_Sequence_Collection Cercis/canadensis/annotations/ISC453364.gnm3.ann1.3N1M/cerca.ISC453364.gnm3.ann1.3N1M.mrna.fna.gz nucl 49801 'Cercis canadensis ISC453364 v3.1 mRNAs'
-mkblastdb mRNA_Sequence_Collection Chamaecrista/fasciculata/annotations/MN87.gnm1.ann1.LWFM/chafa.MN87.gnm1.ann1.LWFM.mrna.fna.gz nucl 53854 'Chamaecrista fasciculata MN87 v1.1 pmRNAs'
+mkblastdb mRNA_Sequence_Collection Chamaecrista/fasciculata/annotations/ISC494698.gnm1.ann1.G7XW/chafa.ISC494698.gnm1.ann1.G7XW.cds_primary.fna.gz nucl 53854 'Chamaecrista fasciculata ISC494698 v1.1 pmRNAs'
 mkblastdb mRNA_Sequence_Collection Cicer/arietinum/annotations/CDCFrontier.gnm1.ann1.nRhs/cicar.CDCFrontier.gnm1.ann1.nRhs.mrna.fna.gz nucl 3827 'Cicer arietinum CDCFrontier v1.1 mRNAs'
 mkblastdb mRNA_Sequence_Collection Faidherbia/albida/annotations/WAFC.gnm1.ann1.RTP9/faial.WAFC.gnm1.ann1.RTP9.mrna.fna.gz nucl 138055 'Faidherbia albida WAFC v1.1 mRNAs'
 mkblastdb mRNA_Sequence_Collection Glycine/cyrtoloba/annotations/G1267.gnm1.ann1.HRFD/glycy.G1267.gnm1.ann1.HRFD.mrna.fna.gz nucl 45689 'Glycine cyrtoloba G1267 v1.1 mRNAs'
@@ -101,7 +99,7 @@ mkblastdb Protein_Sequence_Collection Arachis/hypogaea/annotations/Tifrunner.gnm
 mkblastdb Protein_Sequence_Collection Arachis/ipaensis/annotations/K30076.gnm1.ann1.J37m/araip.K30076.gnm1.ann1.J37m.protein.faa.gz prot 130454 'Arachis ipaensis K30076 v1.1 proteins'
 mkblastdb Protein_Sequence_Collection Cajanus/cajan/annotations/ICPL87119.gnm2.ann1.L3ZH/cajca.ICPL87119.gnm2.ann1.L3ZH.protein_primary.faa.gz prot 3821 'Cajanus cajan ICPL87119 v2.1 proteins'
 mkblastdb Protein_Sequence_Collection Cercis/canadensis/annotations/ISC453364.gnm3.ann1.3N1M/cerca.ISC453364.gnm3.ann1.3N1M.mrna.fna.gz prot 49801 'Cercis canadensis ISC453364 v3.1 proteins'
-mkblastdb Protein_Sequence_Collection Chamaecrista/fasciculata/annotations/MN87.gnm1.ann1.LWFM/chafa.MN87.gnm1.ann1.LWFM.protein.faa.gz prot 53854 'Chamaecrista fasciculata MN87 v1.1 pproteins'
+mkblastdb Protein_Sequence_Collection Chamaecrista/fasciculata/annotations/ISC494698.gnm1.ann1.G7XW/chafa.ISC494698.gnm1.ann1.G7XW.protein.faa.gz prot 53854 'Chamaecrista fasciculata ISC494698 v1.1 pproteins'
 mkblastdb Protein_Sequence_Collection Cicer/arietinum/annotations/CDCFrontier.gnm1.ann1.nRhs/cicar.CDCFrontier.gnm1.ann1.nRhs.protein.faa.gz prot 3827 'Cicer arietinum CDCFrontier v1.1 proteins'
 mkblastdb Protein_Sequence_Collection Faidherbia/albida/annotations/WAFC.gnm1.ann1.RTP9/faial.WAFC.gnm1.ann1.RTP9.protein.faa.gz prot 138055 'Faidherbia albida WAFC v1.1 proteins'
 mkblastdb Protein_Sequence_Collection Glycine/cyrtoloba/annotations/G1267.gnm1.ann1.HRFD/glycy.G1267.gnm1.ann1.HRFD.protein.faa.gz prot 45689 'Glycine cyrtoloba G1267 v1.1 proteins'
