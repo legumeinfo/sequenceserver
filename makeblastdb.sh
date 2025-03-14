@@ -19,7 +19,6 @@ mkblastdb() (
   esac
   curl --fail --no-progress-meter "${url}" |
     gzip -dc |
-      sed 's/\(gly[a-z][a-z]\.[[:alnum:]]\{1,\}\.gnm[0-9]\{1,\}\.\(ann[0-9]\{1,\}\.\)\{0,1\}\([^[:space:]]*\)\)/\3 dsid=\1/' |
         makeblastdb -parse_seqids -hash_index -dbtype ${3} -taxid ${4} -title "${5}" -out "${seqfile}"
   mv ${seqfile}.* "${outdir}"
   touch "${seqfile}.done"
