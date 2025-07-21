@@ -91,7 +91,7 @@ module SequenceServer
       #locEnd = coordinates[1][1].to_s()
       locStart = hsps[0].sstart.to_s()
       locEnd = hsps[0].send.to_s()
-      assembly = id.match('^.+gnm\d+')[0]
+      assembly = id.match('^.+gnm[^.]+')[0]
       tracks = 'sequenceserver_track'
 
       # Prepare the sessionTracks field
